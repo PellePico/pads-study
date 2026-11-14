@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PADS study</title>
+<meta name="robots" content="noindex, nofollow">
+<script>
+  /* set the saved theme before first paint (no flash) */
+  try { var t = JSON.parse(localStorage.getItem("pads:theme")); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/main.css">
+<!-- one optional stylesheet per subject (each file exists; empty is fine) -->
+<link rel="stylesheet" href="subjects/foundations.css">
+<link rel="stylesheet" href="subjects/data.css">
+<link rel="stylesheet" href="subjects/oop.css">
+<link rel="stylesheet" href="subjects/algorithms.css">
+<link rel="stylesheet" href="subjects/datasci.css">
+<link rel="stylesheet" href="subjects/exam.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" id="brand" href="#"><b>PADS study</b><span>Python, step by step</span></a>
+    <nav class="tabs" id="tabs" aria-label="Subjects"></nav>
+    <div class="top-tools"><button class="btn small" id="themeBtn" type="button">Theme: auto</button></div>
+  </div>
+</header>
+<div class="shell" id="shell">
+  <nav class="side" id="side" aria-label="Topics" hidden></nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+
+<!-- framework (order matters) -->
+<script src="js/core.js"></script>
+<script src="js/python.js"></script>
+<script src="js/components.js"></script>
+<!-- subjects: each file calls PADS.registerSubject({...}) -->
+<script src="subjects/foundations.js"></script>
+<script src="subjects/data.js"></script>
+<script src="subjects/oop.js"></script>
+<script src="subjects/algorithms.js"></script>
+<script src="subjects/datasci.js"></script>
+<script src="subjects/exam.js"></script>
+<!-- app starts last -->
+<script src="js/app.js"></script>
+</body>
+</html>

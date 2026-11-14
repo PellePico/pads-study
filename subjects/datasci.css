@@ -1,0 +1,123 @@
+/* Styles for the NumPy, Pandas & plots subject only. Colours: tokens only. Every class starts with .datasci- */
+.datasci-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.datasci-three { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 12px; align-items: start; }
+@media (max-width: 720px) { .datasci-two, .datasci-three { grid-template-columns: minmax(0, 1fr); } }
+.datasci-bad { color: var(--swap); margin: 0; }
+pre.datasci-errout { color: var(--code-num); }
+.datasci-yes { color: var(--done); font-weight: 600; }
+.datasci-no { color: var(--swap); font-weight: 600; }
+.datasci-num { min-width: 1.6em; display: inline-block; text-align: right; }
+.datasci-stat { margin: 10px 0 0; font-variant-numeric: tabular-nums; }
+
+/* 2-D grid of array cells */
+.datasci-gridwrap { overflow-x: auto; padding-bottom: 2px; }
+.datasci-grid { display: inline-grid; gap: 4px; align-items: center; }
+.datasci-cell { min-height: 36px; padding: 0 6px; border-radius: 6px; background: var(--tile); color: var(--tile-ink); display: grid; place-items: center; font: 500 14px var(--font-code); border: 2px solid transparent; font-variant-numeric: tabular-nums; transition: background-color 180ms var(--ease), opacity 180ms var(--ease); }
+button.datasci-cell { cursor: pointer; width: 100%; }
+button.datasci-cell:hover { border-color: var(--accent); }
+.datasci-gl { font: 500 12px var(--font-code); color: var(--muted); white-space: nowrap; text-align: center; }
+.datasci-gl.rowl { text-align: right; padding-right: 4px; }
+button.datasci-gl { background: transparent; border: 1px dashed var(--line); border-radius: 6px; padding: 3px 6px; cursor: pointer; }
+button.datasci-gl:hover, button.datasci-gl.hi { border-color: var(--accent); color: var(--accent); border-style: solid; }
+.datasci-extra { padding-left: 6px; }
+.datasci-chip { font: 500 13px var(--font-code); padding: 4px 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); white-space: pre; }
+.datasci-chip.ok { border-color: var(--done); color: var(--done); }
+.datasci-chip.no { color: var(--muted); }
+
+/* mask rows */
+.datasci-mask { display: grid; gap: 4px; align-items: center; }
+.datasci-mask .datasci-cell { min-height: 32px; padding: 0 2px; font-size: 13px; }
+.datasci-mask > .datasci-gl:nth-child(-n + 10) { font-size: 11px; }
+.datasci-bool { font: 500 11px var(--font-code); text-align: center; padding: 4px 0; border-radius: 4px; overflow: hidden; }
+.datasci-bool.t { color: var(--done); background: color-mix(in srgb, var(--done) 14%, var(--surface)); }
+.datasci-bool.f { color: var(--swap); background: color-mix(in srgb, var(--swap) 9%, var(--surface)); }
+
+/* summary sliders */
+.datasci-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 14px; }
+.datasci-slider { display: flex; align-items: center; gap: 6px; }
+.datasci-slider label { font-family: var(--font-code); min-width: 2.6em; }
+.datasci-slider input { flex: 1; min-width: 60px; }
+
+/* SVG extras (tones come from main.css) */
+svg.dw .datasci-solid.tone-accent { fill: var(--accent); }
+svg.dw .datasci-solid.tone-cmp { fill: var(--cmp); }
+svg.dw .datasci-solid.tone-min { fill: var(--min); }
+svg.dw .datasci-dot { fill: var(--tile); stroke: var(--muted); }
+svg.dw .datasci-mark { stroke-width: 2.5; }
+svg.dw .datasci-thick { stroke-width: 2.5; }
+svg.dw .bx.datasci-bar { fill: color-mix(in srgb, var(--accent) 55%, var(--surface)); stroke: var(--accent); }
+svg.dw .ln-plain.datasci-band { fill: color-mix(in srgb, var(--accent) 20%, transparent); stroke: none; }
+svg.dw .datasci-guide { opacity: 0.55; }
+svg.dw .datasci-t-accent { fill: var(--accent); font-weight: 600; }
+svg.dw .datasci-t-done { fill: var(--done); font-weight: 600; }
+svg.dw .datasci-t-min { fill: var(--min); font-weight: 600; }
+svg.dw .datasci-t-cmp { fill: var(--cmp); font-weight: 600; }
+svg.dw .datasci-draw path { stroke-dasharray: 420; stroke-dashoffset: 420; animation: datasci-draw 800ms var(--ease) forwards; }
+svg.dw .datasci-pop { animation: datasci-pop 500ms 600ms var(--ease) both; }
+@keyframes datasci-draw { to { stroke-dashoffset: 0; } }
+@keyframes datasci-pop { from { opacity: 0; } to { opacity: 1; } }
+.datasci-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+.datasci-steps li.cur { color: var(--ink); background: color-mix(in srgb, var(--cmp) 16%, transparent); border-radius: 4px; }
+.datasci-steps li.later { visibility: hidden; }
+.datasci-steps .mono { overflow-wrap: anywhere; }
+
+/* DataFrame tables */
+.datasci-dfwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.datasci-df { border-collapse: collapse; width: 100%; font: 13px var(--font-code); font-variant-numeric: tabular-nums; }
+.datasci-df th, .datasci-df td { padding: 5px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.datasci-df tbody tr:last-child th, .datasci-df tbody tr:last-child td { border-bottom: 0; }
+.datasci-df thead th { font-weight: 600; color: var(--muted); font-family: var(--font-code); }
+.datasci-df thead tr.pos th { font-weight: 400; font-size: 11px; padding-top: 3px; padding-bottom: 0; border-bottom: 0; }
+.datasci-df th.idx { color: var(--muted); font-weight: 500; background: var(--surface-2); }
+.datasci-df td.num { text-align: right; }
+.datasci-pos { color: var(--muted); font-size: 11px; }
+.datasci-nan { color: var(--swap); font-style: italic; }
+.datasci-df .datasci-hl { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--ink); }
+.datasci-df .datasci-sel { background: color-mix(in srgb, var(--accent) 30%, var(--surface)); color: var(--ink); font-weight: 600; }
+.datasci-df tr.datasci-keep td, .datasci-df tr.datasci-keep th { background: color-mix(in srgb, var(--done) 9%, var(--surface)); }
+.datasci-df tr.datasci-keep th.idx { box-shadow: inset 3px 0 0 var(--done); }
+.datasci-df tr.datasci-drop td, .datasci-df tr.datasci-drop th { opacity: 0.38; }
+.datasci-df tr.datasci-cur td, .datasci-df tr.datasci-cur th { background: color-mix(in srgb, var(--cmp) 20%, var(--surface)); }
+.datasci-df tr.datasci-later td, .datasci-df tr.datasci-later th { opacity: 0.4; }
+.datasci-maskcol { border-left: 2px solid var(--line); text-align: center !important; }
+.datasci-df .datasci-m0 { color: var(--held); }
+.datasci-df .datasci-m1 { color: var(--cmp); }
+.datasci-df .datasci-m2 { color: var(--min); }
+.datasci-df td.datasci-kboth { box-shadow: inset 3px 0 0 var(--done); }
+.datasci-df td.datasci-konly-l { box-shadow: inset 3px 0 0 var(--cmp); }
+.datasci-df td.datasci-konly-r { box-shadow: inset 3px 0 0 var(--min); }
+.datasci-locctl { display: grid; gap: 8px; margin: 10px 0; }
+
+/* Series alignment */
+.datasci-align { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.datasci-series { display: grid; gap: 4px; }
+.datasci-srow { display: grid; grid-template-columns: 1.2em minmax(3.4em, auto); gap: 4px; align-items: center; }
+.datasci-op { font: 600 18px var(--font-code); color: var(--muted); }
+
+/* missing data */
+.datasci-blinkwrap .mk-swap { animation: datasci-blink 1.2s ease-in-out infinite alternate; }
+@keyframes datasci-blink { from { opacity: 1; } to { opacity: 0.45; } }
+
+/* groupby piles */
+.datasci-ctl { display: grid; gap: 8px; }
+.datasci-piles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+@media (max-width: 720px) { .datasci-piles { grid-template-columns: minmax(0, 1fr); } }
+.datasci-pile { --c: var(--held); border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line)); border-top: 4px solid var(--c); border-radius: 10px; padding: 8px 10px; background: color-mix(in srgb, var(--c) 6%, var(--surface)); }
+.datasci-pile.datasci-g1 { --c: var(--cmp); }
+.datasci-pile.datasci-g2 { --c: var(--min); }
+.datasci-pilehead { font: 600 13px var(--font-code); margin-bottom: 4px; }
+.datasci-pile ul { margin: 0; padding-left: 16px; font-size: 13px; }
+.datasci-calc { margin-top: 6px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.datasci-res { margin-top: 6px; font: 600 22px var(--font-code); color: var(--c); }
+
+/* plot game */
+.datasci-gameq { font-size: 17px; margin: 0 0 10px; }
+
+/* figure anatomy */
+.datasci-anat svg .datasci-part { cursor: pointer; transition: opacity 180ms var(--ease); }
+.datasci-anat.has-sel svg .datasci-part:not(.datasci-hi) { opacity: 0.28; }
+.datasci-anat svg g.datasci-hi > rect, .datasci-anat svg rect.datasci-hi { stroke: var(--accent); stroke-width: 2.5; }
+.datasci-anat svg line.datasci-hi { stroke: var(--accent); }
+.datasci-anat svg text.datasci-hi { fill: var(--accent); }
+.datasci-anat svg .datasci-axesbg > rect, .datasci-anat svg rect.datasci-axesbg { fill: var(--surface-2); }
+.datasci-clip { width: 0; min-width: 100%; }

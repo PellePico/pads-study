@@ -1,0 +1,48 @@
+/* Styles for the Python foundations subject only. Colours: tokens only. Every class starts with .fd- */
+.fd-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 720px) { .fd-two { grid-template-columns: minmax(0, 1fr); } }
+.fd-ok { color: var(--done); }
+.fd-err { color: var(--swap); }
+.fd-t { color: var(--done); } .fd-f { color: var(--swap); }
+.fd-good { margin: 10px 0 0; }
+.fd-badp { margin: 10px 0 0; }
+
+/* cast explorer */
+.fd-val[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.fd-castout { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.fd-castline { font-size: 17px; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.fd-castline code { font-size: 15px; overflow-wrap: anywhere; }
+
+/* operator dots */
+.fd-groups { display: flex; flex-wrap: wrap; gap: 8px; }
+.fd-group { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 5px; border-radius: 6px; border: 1.5px solid var(--accent); max-width: 110px; }
+.fd-group i { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.fd-group.left { border-color: var(--cmp); border-style: dashed; }
+.fd-group.left i { background: var(--cmp); }
+
+/* if/elif/else checks */
+.fd-checks { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* L-E-G search */
+.fd-beam { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.fd-scope { display: grid; gap: 1px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); min-width: 92px; }
+.fd-scope.hit { border-color: var(--done); background: color-mix(in srgb, var(--done) 14%, var(--bg)); }
+.fd-scope.miss { opacity: 0.85; }
+.fd-scope.skip { opacity: 0.4; }
+.fd-arrow { color: var(--muted); }
+pre.fd-err { color: var(--code-num); }
+
+/* slicing ruler */
+.fd-slctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; }
+.fd-slrow { display: flex; align-items: center; gap: 8px; }
+.fd-slrow label { display: inline-flex; align-items: center; gap: 4px; min-width: 4.5em; font-family: var(--font-code); }
+.fd-slrow input[type="range"] { flex: 1; min-width: 80px; }
+.fd-off { opacity: 0.35; }
+.fd-slexpr { margin: 14px 0 8px; font-size: 18px; }
+.fd-slexpr code { font-size: 17px; }
+.fd-ruler { overflow-x: auto; padding-bottom: 4px; }
+.fd-single { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* immutability */
+.fd-letter { cursor: pointer; font: 500 16px var(--font-code); }
+.fd-letter:hover { outline: 2px solid var(--swap); }
