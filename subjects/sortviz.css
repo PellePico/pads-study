@@ -1,0 +1,4 @@
+/* Sorting visualizer tab */
+.sv-wrap { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.sv-frame { display: block; width: 100%; height: 1400px; border: 0; }
+@media (max-width: 760px) { .sv-frame { height: 1800px; } }

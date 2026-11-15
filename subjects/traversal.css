@@ -1,0 +1,39 @@
+/* Styles for the Lecture 10 subject (traversal) only. Colours: tokens only. Every class starts with .tv- */
+.tv-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 720px) { .tv-two { grid-template-columns: minmax(0, 1fr); } }
+.tv-pic { padding: 10px; }
+.tv-flow { padding: 12px; }
+
+/* tree drawing */
+svg.dw .tv-thick { stroke-width: 3.5; }
+svg.dw .tv-note { fill: var(--muted); font-size: 11px; }
+
+/* reveal + hint ladder */
+.tv-revealwrap { margin: 8px 0 16px; display: grid; gap: 10px; justify-items: start; }
+.tv-reveal { width: 100%; }
+.tv-rungs { display: grid; gap: 8px; margin: 10px 0; }
+.tv-rung { padding: 10px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); min-width: 0; }
+.tv-answer { border-color: var(--done); background: color-mix(in srgb, var(--done) 8%, var(--surface)); }
+
+/* ETL rows */
+.tv-etl td { vertical-align: middle; }
+.tv-currow td { background: color-mix(in srgb, var(--held) 12%, var(--surface)); }
+.tv-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 13px; border: 1px solid var(--line); white-space: nowrap; }
+.tv-pill.mk-dim { opacity: 0.6; }
+
+/* clickable buggy code */
+.tv-bugcode { display: grid; padding: 6px 0; overflow-x: auto; grid-template-columns: minmax(100%, max-content); min-width: 0; }
+.tv-lnbtn { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 2.2em minmax(0, 1fr); min-width: 100%; cursor: pointer; padding: 1px 10px 1px 0; font: inherit; color: inherit; white-space: pre; }
+.tv-lnbtn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.tv-lnbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tv-lnbtn.bad { background: color-mix(in srgb, var(--swap) 26%, transparent); }
+.tv-lnbtn.good { background: color-mix(in srgb, var(--done) 20%, transparent); }
+.tv-lnbtn.active { outline: 2px solid var(--cmp); outline-offset: -2px; }
+.tv-bugpanel { padding: 10px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); min-height: 5em; }
+
+/* outputs */
+.tv-outbad { border-left: 4px solid var(--swap); }
+.tv-outok { border-left: 4px solid var(--done); }
+.tv-yes { color: var(--done); font-weight: 600; }
+.tv-now { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); min-height: 3em; overflow-wrap: anywhere; }
+.tv-saved .mono div { padding: 1px 0; }

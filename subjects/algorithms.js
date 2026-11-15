@@ -6,7 +6,7 @@
   "use strict";
   const { h, ui, pyrepr } = PADS;
   const D = ui.draw;
-  const SORT_SITE = "../sorting-line-by-line/index.html";
+  const SORT_SITE = "sorting/index.html";
 
   /* ---------- small helpers for this file only ---------- */
   const row = (...kids) => h("div", { class: "row-wrap" }, ...kids);
@@ -1160,7 +1160,7 @@
     const dbl = btn("Double n", () => { e = Math.min(10, e + 1); sl.value = e; draw(); });
     const half = btn("Halve n", () => { e = Math.max(1, e - 1); sl.value = e; draw(); });
     el.append(row(label("n =", "alg-grow-n"), sl, nTxt, dbl, half), h("div", { style: "margin-top:10px" }, body),
-      h("p", { class: "small muted", style: "margin:8px 0 0", html: `Bars use a log scale (each step is ×10), otherwise O(2ⁿ) would not fit on any screen. For the curves, open the <a href="${SORT_SITE}?algo=bigo">Big-O tab on your sorting site ↗</a>.` }));
+      h("p", { class: "small muted", style: "margin:8px 0 0", html: `Bars use a log scale (each step is ×10), otherwise O(2ⁿ) would not fit on any screen. For the curves, open the <a href="#sortviz/bigo">Big-O page in the Sorting visualizer tab</a>.` }));
     draw();
   }
 
@@ -1818,7 +1818,7 @@
     ["merge", "Merge", "split in halves, sort each half (recursion), merge them", "O(n log n)", "O(n log n)", "O(n log n)", "O(n)", "yes (with <code>&lt;=</code>)"],
     ["quick", "Quick", "pick a pivot, split into less / equal / greater, sort those (recursion)", "O(n log n)", "O(n log n)", "O(n²)", "O(n) for the list version", "list version yes; in-place no"],
   ];
-  const sortTable = () => ui.table({ head: ["Sort", "Idea", "Best", "Average", "Worst", "Extra space", "Stable?", ""], rows: SORTS.map(s => [`<b>${s[1]}</b>`, s[2], s[3], s[4], s[5], s[6], s[7], `<a href="${SORT_SITE}?algo=${s[0]}">step through ↗</a>`]) });
+  const sortTable = () => ui.table({ head: ["Sort", "Idea", "Best", "Average", "Worst", "Extra space", "Stable?", ""], rows: SORTS.map(s => [`<b>${s[1]}</b>`, s[2], s[3], s[4], s[5], s[6], s[7], `<a href="#sortviz/${s[0]}">step through</a>`]) });
 
   // merge sort as a recursion tree
   const MS_NODES = {
@@ -1934,7 +1934,7 @@
     summary: "The five sorts in one table, merge sort's recursion, stability, and <code>key=lambda</code>. Step through each sort line by line on your sorting site.",
     sources: "L9 p13–30; NB §27; Ex9",
     blocks: [
-      { type: "callout", kind: "note", title: "Line-by-line steppers", html: `<p>Your sorting site has a stepper for every sort below, plus a Big-O tab with curves. <a href="${SORT_SITE}">Open the sorting site ↗</a> · <a href="${SORT_SITE}?algo=bigo">Big-O tab ↗</a></p>` },
+      { type: "callout", kind: "note", title: "Line-by-line steppers", html: `<p>The Sorting visualizer tab has a stepper for every sort below, plus a Big-O tab with curves. <a href="#sortviz">Open the Sorting visualizer</a> · <a href="#sortviz/bigo">Big-O curves</a></p>` },
       { type: "h", text: "The five sorts at a glance" },
       sortTable,
       { type: "table", caption: "What Big-O meant in your Ex9 benchmark", head: ["Sort", "Big-O", "n doubled (50 → 100 → 200 → 400)"], rows: [

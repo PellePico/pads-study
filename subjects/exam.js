@@ -1876,7 +1876,7 @@
   PADS.registerSubject({
     id: "exam",
     title: "Exam",
-    order: 6,
+    order: 8,
     blurb: "How the exam works, a drill page for each of last year's six questions, and a fresh two-part mock exam you can check in the browser.",
     covers: ["Format, hand-in and time plan", "Q1–Q6 drills: task, plan, worked solution, checked practice", "Mock exam: new story, same six question types"],
     exam: [

@@ -2106,7 +2106,7 @@
   PADS.registerSubject({
     id: "datasci",
     title: "NumPy, Pandas & plots",
-    order: 5,
+    order: 7,
     blurb: "NumPy arrays, masks and <code>axis=</code> (exam Q5), Pandas tables (filter, <code>loc</code>/<code>iloc</code>, missing data, <code>groupby</code>, merge, melt), and choosing and reading plots.",
     covers: ["NumPy: shape, indexing, masks, <code>np.where</code>", "<code>axis=1</code> row totals (exam Q5)", "Pandas: filter, loc/iloc, NaN, groupby, merge, melt", "Matplotlib anatomy, which plot when, Seaborn <code>hue</code>"],
     exam: [
