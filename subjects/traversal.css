@@ -37,3 +37,13 @@ svg.dw .tv-note { fill: var(--muted); font-size: 11px; }
 .tv-yes { color: var(--done); font-weight: 600; }
 .tv-now { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); min-height: 3em; overflow-wrap: anywhere; }
 .tv-saved .mono div { padding: 1px 0; }
+
+/* data-engineering topics */
+.tv-http { background: var(--code-bg); color: var(--code-ink); font: 14px/1.7 var(--font-code); padding: 10px 14px; border-radius: var(--radius); overflow-x: auto; white-space: pre; }
+.tv-http > div { min-height: 1.7em; }
+.tv-httpbtn { all: unset; cursor: pointer; border-radius: 4px; padding: 0 2px; border-bottom: 2px dotted var(--code-dim); }
+.tv-httpbtn:hover { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+.tv-httpbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tv-httpbtn.on { background: color-mix(in srgb, var(--cmp) 35%, transparent); border-bottom-color: var(--cmp); }
+.tv-httpsep { color: var(--code-dim); }
+.tv-page { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); min-width: 120px; display: grid; gap: 2px; }

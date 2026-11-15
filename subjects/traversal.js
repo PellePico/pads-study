@@ -514,64 +514,528 @@
     return S.el;
   }
 
+  /* ---------- shared bits for the data-engineering topics ---------- */
+  function seg(labels, aria, onpick, start) {           // segmented control; returns the element
+    const el = h("div", { class: "seg", role: "group", "aria-label": aria });
+    const bs = labels.map((t, i) => h("button", { type: "button", "aria-pressed": String(i === (start || 0)), onclick: () => pick(i) }, t));
+    function pick(i) { bs.forEach((b, j) => b.setAttribute("aria-pressed", String(i === j))); onpick(i); }
+    el.append(...bs);
+    return el;
+  }
+  function chainSvg(names, label, tone) {                // boxes in a row with arrows: a → b → c
+    const w = 600, n = names.length, bw = Math.min(110, (w - 12 - (n - 1) * 18) / n);
+    const S = D.svg({ w, h: 86, label });
+    names.forEach(([t, sub], i) => {
+      const x = 6 + i * (bw + 18);
+      S.box(x, 14, bw, 58, { text: t, sub, tone: (tone || {})[i] || null });
+      if (i < n - 1) S.arrow(x + bw + 2, 43, x + bw + 16, 43, {});
+    });
+    return S.el;
+  }
+  const card = (node, note) => h("div", { class: "card tv-flow" }, node, note ? h("p", { class: "small muted", style: "margin:6px 0 0", html: note }) : null);
+
+  /* ================================================================
+     TOPIC 1: Overview of Lecture 10
+     ================================================================ */
   const lecture = {
     id: "lecture",
     title: "What Lecture 10 covers",
-    summary: "The slides are <b>Data Engineering Basics I</b>: lifecycle, formats, storage, APIs and ETL. Exercise 10 is about <b>BFS and DFS</b> on a binary tree. This page maps both and teaches the slides.",
-    sources: "L10 p1–53; Ex10",
+    summary: "The slides are <b>Data Engineering Basics I</b> (53 pages). Exercise 10 is about <b>BFS and DFS</b> on a binary tree. This page is the map.",
+    sources: "L10 p1–3; Ex10",
     blocks: [
       { type: "h", text: "Two things this week", sub: "The slides and the exercise are about different topics." },
-      { type: "table", head: ["Part", "What it is about", "Where on this site"], rows: [
-        ["Slides (L10)", "data engineering: how data gets from a source to a clean table", "this page"],
-        ["Exercise 10, part 1", "debug a broken BFS", "<a href=\"#traversal/bfs\">BFS step by step</a> · <a href=\"#traversal/bfs-debug\">Debugging BFS</a>"],
-        ["Exercise 10, DFS easy", "recursive pre/in/post-order, count nodes", "<a href=\"#traversal/dfs-recursive\">Recursive DFS</a>"],
-        ["Exercise 10, DFS medium", "height, root-to-leaf paths, path sums", "<a href=\"#traversal/height-paths\">Height, paths & sums</a>"],
-        ["Exercise 10, DFS hard", "DFS without recursion; height + diameter + balance in one pass", "<a href=\"#traversal/iterative-dfs\">Iterative DFS</a> · <a href=\"#traversal/analyze\">One-pass analysis</a>"],
+      { type: "table", caption: "The slides: one page on this site per section", head: ["Slides", "Section", "Learn it on"], rows: [
+        ["p4–16", "What data engineering is, the two lifecycles, how data comes in, quality", "<a href=\"#traversal/de-lifecycle\">Lifecycle & ingestion</a>"],
+        ["p17–27", "CSV, JSON, XML, Parquet, Avro; schema drift; small format mistakes", "<a href=\"#traversal/de-formats\">File formats</a>"],
+        ["p28–36", "Databases, warehouses, lakes, lakehouses; OLTP vs OLAP; NoSQL", "<a href=\"#traversal/de-storage\">Storage</a>"],
+        ["p37–44", "APIs, HTTP, pagination, retries, duplicates", "<a href=\"#traversal/de-apis\">APIs & collection</a>"],
+        ["p45–51", "ETL vs ELT, orchestration, contracts, idempotent loads", "<a href=\"#traversal/de-etl\">ETL pipelines</a>"],
+      ] },
+      { type: "table", caption: "Exercise 10 (W46)", head: ["Part", "What it is about", "Learn it on"], rows: [
+        ["BFS", "debug a broken BFS", "<a href=\"#traversal/bfs\">BFS step by step</a> · <a href=\"#traversal/bfs-debug\">Debugging BFS</a>"],
+        ["DFS easy", "recursive pre/in/post-order, count nodes", "<a href=\"#traversal/dfs-recursive\">Recursive DFS</a>"],
+        ["DFS medium", "height, root-to-leaf paths, path sums", "<a href=\"#traversal/height-paths\">Height, paths & sums</a>"],
+        ["DFS hard", "DFS without recursion; height + diameter + balance in one pass", "<a href=\"#traversal/iterative-dfs\">Iterative DFS</a> · <a href=\"#traversal/analyze\">One-pass analysis</a>"],
         ["All TODOs with hints", "", "<a href=\"#traversal/walkthrough\">Exercise 10 walkthrough</a>"],
       ] },
       { type: "callout", kind: "note", title: "Already on the site", html: "<p>Tree words, the three DFS orders on the A–G tree and BST insert: <a href=\"#algorithms/trees\">Trees & BST</a>. DFS and BFS on an adjacency matrix (exam Q6): <a href=\"#algorithms/dfs-bfs\">DFS & BFS</a>. Stacks and queues: <a href=\"#algorithms/stacks-queues\">Stacks & queues</a>.</p>" },
 
-      { type: "h", text: "Data engineering in one line", sub: "L10 p4–5" },
-      `<p>Data engineering builds the pipes that bring data from where it is made to where it is used, <b>clean and on time</b>.</p>`,
-      { type: "table", head: ["Job", "Main question", "Tiny example"], rows: [
-        ["Data engineering", "Is the data reliable and ready?", "a clean sales table"],
-        ["Analytics", "What happened, and why?", "weekly sales trend"],
-        ["Data science", "What may happen next?", "a demand forecast"],
+      { type: "h", text: "The whole lecture in one picture", sub: "L10 p6, p9" },
+      () => card(flowSvg(), "An online shop wants <b>daily revenue per product</b>. Data is made (orders), collected, kept, cleaned and summed, then shown. Each page above zooms in on one box."),
+      { type: "table", caption: "What you should be able to do (L10 p3)", head: ["Goal", "Tiny example", "Page"], rows: [
+        ["Trace data from source to use and disposal", "an order: checkout → table → report → deleted after 5 years", "<a href=\"#traversal/de-lifecycle\">Lifecycle</a>"],
+        ["Compare file formats and storage", "CSV for a quick export, Parquet for a big column sum", "<a href=\"#traversal/de-formats\">Formats</a> · <a href=\"#traversal/de-storage\">Storage</a>"],
+        ["Collect data from an API or file safely", "follow every page, drop repeated ids", "<a href=\"#traversal/de-apis\">APIs</a>"],
+        ["Explain and sketch a small ETL pipeline", "read CSV → parse amounts → drop duplicates → write", "<a href=\"#traversal/de-etl\">ETL</a>"],
+        ["Judge quality and trade-offs", "a missing amount is not 0; batch is cheaper, streaming is fresher", "all five"],
       ] },
-      { type: "callout", kind: "rule", title: "Success = correct + fresh enough + reliable access", html: "<p>A shop wants daily revenue per product. If one order is counted twice, every number after it is wrong.</p>" },
+      { type: "callout", kind: "exam", title: "Exam link", html: "<p>Last year's exam had no data-engineering question; its tree question (Q6, DFS) is what Exercise 10 trains. Still, the Python inside these pages (loop over rows, check, keep or skip; a dict keyed by id) is the same skill as exam Q3–Q5. An explain question on ETL, formats or batch vs streaming is possible.</p>" },
+    ],
+    quiz: [
+      { type: "mc", q: "Which job asks “Is the data reliable and ready?”", options: ["Data engineering", "Analytics", "Data science"], answer: 0,
+        hint: "L10 p5: three jobs, three questions.", explain: "Engineering makes the data reliable. Analytics asks what happened; data science asks what may happen next." },
+      { type: "mc", q: "Put the engineering lifecycle in order.", options: ["Ingest → generate → transform → store → serve", "Generate → ingest → store → transform → serve", "Generate → transform → ingest → serve → store"], answer: 1,
+        hint: "Data must be made before it can be collected.", explain: "Generate → ingest → store → transform → serve (L10 p9). Storage supports every step." },
+      { type: "mc", q: "Which page would explain why <code>'250.50' * 2</code> gives <code>'250.50250.50'</code>?", options: ["Storage", "File formats", "APIs"], answer: 1,
+        hint: "Where does the text come from?", explain: "CSV stores everything as text: that is a format question (L10 p18)." },
+      { type: "mc", q: "Exercise 10 is about…", options: ["ETL pipelines", "BFS and DFS on a binary tree", "Parquet files"], answer: 1,
+        hint: "Look at the second table.", explain: "The slides are data engineering; the exercise (W46) is tree traversal." },
+    ],
+  };
 
-      { type: "h", text: "Two lifecycles", sub: "L10 p7–9" },
+  /* ================================================================
+     TOPIC 2: Lifecycle & ingestion (L10 p4–16)
+     ================================================================ */
+  const LATE = [   // event time, arrival time, temperature
+    { id: "e-1", ev: "09:10", arr: "09:11", t: 21.0 },
+    { id: "e-2", ev: "09:35", arr: "09:36", t: 21.4 },
+    { id: "e-3", ev: "09:58", arr: "10:04", t: 22.0, late: true },
+    { id: "e-4", ev: "10:15", arr: "10:16", t: 22.5 },
+    { id: "e-5", ev: "10:40", arr: "10:41", t: 22.9 },
+  ];
+  function lateWidget(el) {
+    const box = h("div");
+    const draw = mode => {
+      const key = mode === 0 ? "ev" : "arr";
+      const buckets = { "09": [], "10": [] };
+      LATE.forEach(e => buckets[e[key].slice(0, 2)].push(e));
+      const S = D.svg({ w: 600, h: 150, label: "five sensor events placed in hourly buckets" });
+      const X = hm => { const [a, b] = hm.split(":").map(Number); return 30 + ((a - 9) * 60 + b) * 4.5; };
+      S.box(30, 20, 270, 70, { tone: "tile", rx: 6 }); S.box(300, 20, 270, 70, { tone: "tile", rx: 6 });
+      S.text(165, 14, "09:00–10:00", { small: true, muted: true }); S.text(435, 14, "10:00–11:00", { small: true, muted: true });
+      LATE.forEach((e, i) => {
+        const x = X(e[key]), y = 42 + (i % 2) * 26;
+        S.circle(x, y, 11, { text: e.id.slice(2), tone: e.late ? "swap" : "accent" });
+      });
+      LATE.filter(e => e.late).forEach(e => { S.arrow(X(e.ev), 108, X(e.arr), 108, { tone: "swap", label: "arrives 6 min late" }); });
+      S.text(30, 140, mode === 0 ? "placed by when it was measured" : "placed by when the pipeline got it", { anchor: "start", small: true, muted: true });
+      const avg = a => (a.reduce((s, e) => s + e.t, 0) / a.length).toFixed(2);
+      const tbl = ui.table({ head: ["Hour", "Events", "Average °C"], num: [2], rows: Object.keys(buckets).map(k => [k + ":00", buckets[k].map(e => e.id + (e.late ? " (late)" : "")).join(", "), avg(buckets[k])]) });
+      box.replaceChildren(h("div", { style: "overflow-x:auto" }, S.el), tbl,
+        h("p", { class: "tv-now", html: mode === 0
+          ? "<b>Event time</b>: e-3 was measured at 09:58, so it belongs to 09:00. The 09:00 average is <b>21.47 °C</b>. But a report that ran at 10:00 had not seen e-3 yet, so it must be <b>updated</b> when late data arrives."
+          : "<b>Processing time</b>: e-3 reached the pipeline at 10:04, so it lands in 10:00. The 09:00 average says <b>21.20 °C</b>: wrong for “what happened at 9?”, even though every record is correct (L10 p15)." }));
+    };
+    el.append(seg(["Bucket by event time", "Bucket by processing time"], "Which time to group by", draw), box);
+    draw(0);
+  }
+
+  const lifecycle = {
+    id: "de-lifecycle",
+    title: "Lifecycle & ingestion",
+    summary: "What data engineering does, the two lifecycles, how data comes in (snapshot, incremental, streaming), which time to trust, and the three quality checks.",
+    sources: "L10 p4–16",
+    blocks: [
+      { type: "h", text: "What data engineering does", sub: "L10 p4–5" },
+      { type: "table", head: ["Step", "Means", "Tiny example"], rows: [
+        ["Collect", "bring data together from databases, devices, files, APIs", "orders from the shop DB + prices from an API"],
+        ["Prepare", "clean, check, join, structure", "<code>'250.50'</code> → <code>250.5</code>; drop a repeated order"],
+        ["Deliver", "make the clean data available, safely and on time", "a revenue table ready at 07:00"],
+      ] },
+      { type: "callout", kind: "rule", title: "Success = correct data + fresh enough + reliable access", html: "<p>If one order is counted twice, every number built on it is wrong. If the table is ready at noon but the meeting was at 9, it is too late.</p>" },
+      { type: "table", head: ["Job", "Main question", "Output", "Tiny example"], rows: [
+        ["Data engineering", "Is the data reliable and ready?", "pipelines, clean tables", "clean sales records"],
+        ["Analytics", "What happened, and why?", "reports, dashboards", "weekly sales trend"],
+        ["Data science", "What may happen next?", "models, predictions", "demand forecast"],
+      ] },
+
+      { type: "h", text: "Two lifecycles", sub: "L10 p7–9. They overlap, but they are not the same." },
       { type: "table", head: ["Lifecycle", "Steps", "Focus"], rows: [
         ["Data lifecycle", "create → store → process → analyse → visualise → share → archive → dispose", "the data itself, over time"],
         ["Engineering lifecycle", "generate → ingest → store → transform → serve", "the system that moves it"],
       ] },
-      () => h("div", { class: "card tv-flow" }, flowSvg(), h("p", { class: "small muted", style: "margin:6px 0 0" }, "Storage supports every step. Security, quality and governance run through all of them (L10 p9–10).")),
-      { type: "table", caption: "How data comes in (L10 p13–15)", head: ["Word", "Meaning", "Tiny example"], rows: [
-        ["Full snapshot", "copy everything each time", "a nightly CSV export"],
-        ["Incremental", "copy only new or changed rows", "orders changed since the last run"],
-        ["Streaming", "handle each event as it arrives", "a live sensor feed"],
-        ["Event time", "when it really happened", "sensor measured at 09:00"],
-        ["Processing time", "when the pipeline handled it", "batch job ran at 10:00"],
+      () => card(flowSvg(), "Engineering lifecycle (L10 p9). Storage supports every step."),
+      { type: "table", caption: "The data lifecycle for one shop order (L10 p8)", head: ["Stage", "What happens to order 101"], rows: [
+        ["1 Create", "the customer pays: a row is written"],
+        ["2 Store", "kept in the orders database"],
+        ["3 Process", "amount parsed, currency checked"],
+        ["4 Analyse", "counted in “revenue per product”"],
+        ["5 Visualise", "a bar in the daily chart"],
+        ["6 Share", "the dashboard is sent to the sales team"],
+        ["7 Archive", "after 1 year: moved to cheap storage"],
+        ["8 Dispose", "after 5 years (the policy): deleted securely"],
+      ] },
+      { type: "callout", kind: "warn", title: "Keeping and deleting are part of the job", html: "<p>Retention (how long to keep) and secure disposal are lifecycle steps, not afterthoughts (L10 p8).</p>" },
+      { type: "table", caption: "Undercurrents: they run under every step (L10 p10)", head: ["Area", "Means", "Tiny example"], rows: [
+        ["Security", "least privilege, encryption, audit log", "the analyst can read orders, not card numbers"],
+        ["Data management", "quality, owner, metadata, lineage, retention", "“revenue_dkk comes from orders.total, owner: sales team”"],
+        ["DataOps", "tests, repeatable deploys, monitoring, recovery", "an alert when today's file has 0 rows"],
       ] },
 
-      { type: "h", text: "File formats", sub: "L10 p17–27. A format is how data is written down." },
-      { type: "table", head: ["Format", "Looks like", "Good for", "Watch out"], rows: [
-        ["CSV", "<code>101,CPH,250.50</code>", "simple tables", "every value is text; no types"],
-        ["JSON", "<code>{\"order_id\": 101, \"tags\": [\"new\"]}</code>", "APIs, nested data", "a key can be missing or renamed"],
-        ["XML", "<code>&lt;city&gt;Copenhagen&lt;/city&gt;</code>", "system exchange", "long and wordy"],
-        ["Parquet", "binary, stored <b>by column</b>", "big analysis that reads a few columns", "not human-readable"],
-        ["Avro", "binary rows + a schema", "typed event streams", "you must manage the schema"],
+      { type: "h", text: "Where raw data comes from", sub: "L10 p11–12" },
+      { type: "table", head: ["Source", "Example"], rows: [
+        ["Operational databases", "orders, customers"], ["Business apps", "ERP, CRM"], ["Sensors / IoT", "temperature, GPS"],
+        ["External APIs", "weather, product prices"], ["Files", "CSV exports, images"], ["App events", "clicks, logs"],
       ] },
-      { type: "table", caption: "Row vs column layout (L10 p21)", head: ["By row (CSV-like)", "By column (Parquet idea)"], code: [0, 1], rows: [
-        ["101, CPH, 250", "id:     [101, 102, 103]"],
-        ["102, AAR, 99", "city:   ['CPH', 'AAR', 'ODE']"],
-        ["103, ODE, 125", "amount: [250, 99, 125]"],
-      ] },
-      `<p>To sum <code>amount</code>, the column layout reads one list and skips the rest. That is why analysis tools like it.</p>`,
+      `<p>Before collecting, find out three things: <b>who owns</b> the source, <b>how</b> you may access it, and <b>how often</b> it changes.</p>`,
+      { type: "code", caption: "A record needs context (L10 p12)", code: `
+          {
+            "event_id": "e-042",                    # which event: the unique id
+            "sensor_id": "s-17",                    # which device sent it
+            "measured_at": "2026-11-05T08:00:00Z",  # when it happened (Z = UTC)
+            "temperature_c": 21.4                   # the value, with its unit in the name
+          }` },
+      { type: "callout", kind: "tip", title: "Which field is the unique id?", html: "<p><code>event_id</code>. One sensor sends many readings, so <code>sensor_id</code> repeats. Two readings can have the same temperature. Only <code>event_id</code> says “this exact event”, so it is what you use to spot duplicates and to reprocess safely.</p>" },
       {
         type: "tryit",
-        title: "Schema drift: the API changed",
-        task: "Yesterday the API sent <code>price</code> as a number. Today it sends <code>unit_price</code> as text (L10 p26). Run it, read the error, then make <code>get_price</code> work for <b>both</b>.",
+        title: "Duplicates: by the right key",
+        task: "The same event <code>e-1</code> was delivered twice (a retry). Run it. Which count is right? Then count by <code>temperature_c</code> instead and see why that is wrong too.",
+        code: `
+          readings = [{"event_id": "e-1", "sensor_id": "s-17", "temperature_c": 21.4},
+                      {"event_id": "e-2", "sensor_id": "s-17", "temperature_c": 21.4},
+                      {"event_id": "e-1", "sensor_id": "s-17", "temperature_c": 21.4},
+                      {"event_id": "e-3", "sensor_id": "s-09", "temperature_c": 19.8}]
+
+          by_event = set()
+          by_sensor = set()
+          for r in readings:
+              by_event.add(r["event_id"])         # the real id
+              by_sensor.add(r["sensor_id"])       # not an id: one sensor, many readings
+
+          print("readings received:", len(readings))
+          print("unique by event_id:", len(by_event))
+          print("unique by sensor_id:", len(by_sensor))`,
+        expectOutput: "readings received: 4\nunique by event_id: 3\nunique by sensor_id: 2",
+        hint: "e-1 and e-2 have the same sensor and the same temperature, but they are two different events.",
+        solutionNote: "3 real events. By sensor you get 2 (too few). By temperature you would also get 2, because e-1 and e-2 both read 21.4.",
+      },
+
+      { type: "h", text: "How data comes in", sub: "L10 p13–14" },
+      { type: "table", head: ["Pattern", "How", "Tiny example"], rows: [
+        ["Full snapshot", "copy everything each time", "a nightly CSV of all 10,000 products"],
+        ["Incremental load", "copy only new or changed rows", "orders with <code>updated_at</code> after the last run: 120 rows"],
+        ["Continuous (streaming)", "handle each event as it arrives", "a live sensor feed"],
+      ] },
+      { type: "table", caption: "Batch vs streaming: a trade-off", head: ["", "Batch", "Streaming"], rows: [
+        ["Runs", "at intervals (every night)", "all the time"],
+        ["Freshness", "hours old", "seconds old"],
+        ["Cost and effort", "simpler, often cheaper", "more state, failures, cost"],
+        ["Good for", "the daily revenue report", "an alert when a freezer gets warm"],
+      ] },
+      { type: "callout", kind: "rule", title: "Choose by how fresh it must be", html: "<p>Pick by the freshness you need, how reliable delivery must be, and total cost: not by speed alone (L10 p14). A report read once a day does not need streaming.</p>" },
+
+      { type: "h", text: "Which time? Event, ingestion, processing", sub: "L10 p15" },
+      { type: "table", head: ["Time", "Means", "Example"], rows: [
+        ["Event time", "when it really happened", "measured at 09:58"],
+        ["Ingestion time", "when the pipeline received it", "arrived 10:04 (network delay)"],
+        ["Processing time", "when the computation handled it", "batch ran at 11:00"],
+      ] },
+      { type: "widget", title: "A late event lands in the wrong hour", intro: "Five sensor readings. e-3 is measured at 09:58 but arrives at 10:04. Switch how you group them and watch the 09:00 average.", render: lateWidget },
+
+      { type: "h", text: "Quality runs through every stage", sub: "L10 p16" },
+      { type: "table", head: ["Check", "Question", "Tiny failing example"], rows: [
+        ["Completeness", "are the required fields there?", "<code>sensor_id</code> is None"],
+        ["Validity", "do values follow the rules?", "950 °C in a living room"],
+        ["Uniqueness", "no unintended duplicates?", "<code>e-1</code> twice"],
+      ] },
+      { type: "table", caption: "…and next to quality", head: ["Security", "Governance"], rows: [
+        ["log in to read; encrypt stored and sent data; hide sensitive fields", "write down owner and lineage; define each field; apply retention and privacy rules"],
+      ] },
+      {
+        type: "tryit",
+        title: "Check every row for the three problems",
+        task: "Run it. Then add a fifth row with <code>\"temperature_c\": None</code> and run again: it crashes. Fix the check so a missing temperature is reported as a completeness problem.",
+        code: `
+          rows = [
+              {"event_id": "e-1", "sensor_id": "s-17", "temperature_c": 21.4},
+              {"event_id": "e-2", "sensor_id": None, "temperature_c": 22.0},
+              {"event_id": "e-3", "sensor_id": "s-17", "temperature_c": 950.0},
+              {"event_id": "e-1", "sensor_id": "s-17", "temperature_c": 21.4},
+          ]
+
+          seen = set()
+          for row in rows:
+              problems = []
+              if row["sensor_id"] is None:                     # completeness
+                  problems.append("missing sensor_id")
+              if not -50 <= row["temperature_c"] <= 60:        # validity
+                  problems.append("temperature out of range")
+              if row["event_id"] in seen:                      # uniqueness
+                  problems.append("duplicate event_id")
+              seen.add(row["event_id"])
+
+              print(row["event_id"], problems or "ok")`,
+        hint: "<code>-50 &lt;= None</code> is a TypeError. Check <code>is None</code> first, and only test the range when the value is there (<code>elif</code>).",
+        solution: `
+          rows = [
+              {"event_id": "e-1", "sensor_id": "s-17", "temperature_c": 21.4},
+              {"event_id": "e-2", "sensor_id": None, "temperature_c": 22.0},
+              {"event_id": "e-3", "sensor_id": "s-17", "temperature_c": 950.0},
+              {"event_id": "e-1", "sensor_id": "s-17", "temperature_c": 21.4},
+              {"event_id": "e-4", "sensor_id": "s-09", "temperature_c": None},
+          ]
+
+          seen = set()
+          for row in rows:
+              problems = []
+              if row["sensor_id"] is None:                     # completeness
+                  problems.append("missing sensor_id")
+              if row["temperature_c"] is None:                 # completeness
+                  problems.append("missing temperature")
+              elif not -50 <= row["temperature_c"] <= 60:      # validity, only if it is there
+                  problems.append("temperature out of range")
+              if row["event_id"] in seen:                      # uniqueness
+                  problems.append("duplicate event_id")
+              seen.add(row["event_id"])
+
+              print(row["event_id"], problems or "ok")`,
+        solutionNote: "Prints: e-1 ok · e-2 ['missing sensor_id'] · e-3 ['temperature out of range'] · e-1 ['duplicate event_id'] · e-4 ['missing temperature']. <code>problems or \"ok\"</code> prints \"ok\" when the list is empty (an empty list counts as False).",
+      },
+      { type: "mistakes", items: [
+        { title: "Using the device as the id", wrong: "seen.add(r['sensor_id'])", right: "seen.add(r['event_id'])", why: "One sensor sends many readings. Only the event id is unique (L10 p12)." },
+        { title: "Grouping by when it arrived", wrong: "hour = arrived_at[:2]", right: "hour = measured_at[:2]", why: "“What happened at 9?” needs event time. Late events would move to the wrong hour (L10 p15)." },
+        { title: "Streaming because it is faster", wrong: "# daily report -> build a live stream", right: "# daily report -> a nightly batch is enough", why: "Choose by needed freshness and cost, not speed alone (L10 p14)." },
+        { title: "Range check before the missing check", wrong: "if not -50 <= t <= 60:", right: "if t is None: ...\nelif not -50 <= t <= 60: ...", why: "Comparing None with a number is a TypeError." },
+        { title: "Keeping everything forever", wrong: "# never delete old orders", right: "# archive after 1 year, delete after the policy's 5", why: "Retention and secure disposal are lifecycle steps (L10 p8)." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "Which field uniquely identifies the event?", code: `{"event_id": "e-042", "sensor_id": "s-17", "measured_at": "2026-11-05T08:00:00Z", "temperature_c": 21.4}`,
+        options: ["<code>sensor_id</code>", "<code>event_id</code>", "<code>measured_at</code>", "<code>temperature_c</code>"], answer: 1,
+        wrong: { 0: "One sensor sends many events.", 2: "Two sensors can measure at the same second.", 3: "Many readings share a temperature." },
+        hint: "Which one can never repeat for a different event?", explain: "<code>event_id</code> names exactly one event: use it to drop duplicates (L10 p12)." },
+      { type: "mc", q: "Each night you copy only the orders changed since the last run. What is this?", options: ["Full snapshot", "Incremental load", "Streaming", "Archiving"], answer: 1,
+        hint: "All of it, or only what changed?", explain: "Only new or changed rows = incremental load (L10 p13)." },
+      { type: "mc", q: "A reading measured at 09:58 arrives at 10:04. For “average temperature from 9 to 10”, which hour should it count in?", options: ["09:00, by event time", "10:00, by processing time", "Drop it: it is late"], answer: 0,
+        hint: "When did the temperature happen?", explain: "It happened at 09:58, so it belongs to the 09:00 hour. Late is not wrong: the 09:00 result must be updated (L10 p15)." },
+      { type: "mc", q: "Two rows have the same <code>order_id</code>. Which quality check fails?", options: ["Completeness", "Validity", "Uniqueness", "Security"], answer: 2,
+        hint: "L10 p16 has three quality words.", explain: "Uniqueness: no unintended duplicates." },
+      { type: "predict", q: "What does this print?", code: `
+          rows = [{"id": 1, "t": 20}, {"id": 2, "t": None}, {"id": 1, "t": 20}]
+          seen = set()
+          bad = 0
+          for r in rows:
+              if r["t"] is None or r["id"] in seen:
+                  bad += 1
+              seen.add(r["id"])
+          print(bad, len(seen))`, answer: "2 2",
+        hint: "Row 2 has no t. Row 3 repeats id 1. How many different ids were added?", explain: "Row 2 (missing) and row 3 (duplicate) are bad: 2. The set holds ids 1 and 2: 2." },
+      { type: "explain", q: "L10 p6: an online shop wants daily revenue by product. In 2–3 sentences: where would a wrong currency or a duplicate order affect the result, and where should you catch it?",
+        answer: "<p>Both errors enter at the source or during ingestion, and every step after that (store, transform, the revenue report) carries them along: a duplicate counts the order twice, and a EUR amount added as DKK makes the total wrong. They should be caught in the Transform step with validation: drop duplicates by <code>order_id</code> and check or convert the currency before summing. Checking early is cheaper than fixing a report later.</p>",
+        points: ["the error enters early and spreads to every later step", "duplicate → counted twice; currency → wrong sum", "catch it when transforming: dedupe by id, check the unit"],
+        hint: "Follow one bad order from Sources to Serve." },
+      { type: "explain", q: "In 2–3 sentences: what is the difference between batch and streaming, and when would you pick streaming?",
+        answer: "<p>Batch runs at set times (for example every night) and handles everything that came in since the last run; it is simpler and cheaper, but the data is less fresh. Streaming handles each event as it arrives, so results are fresh within seconds, but it is harder to run (state, failures, cost). Pick streaming when you must react fast, for example an alert when a freezer sensor gets too warm.</p>",
+        points: ["batch = at intervals, simpler, less fresh", "streaming = continuous, fresh, more complex", "pick by how fresh it must be, not by speed alone"],
+        hint: "L10 p14: think about freshness vs complexity." },
+    ],
+  };
+
+  /* ================================================================
+     TOPIC 3: File formats (L10 p17–27)
+     ================================================================ */
+  const CSV_LINES = [
+    { line: "101,Copenhagen,250.50", split: "['101', 'Copenhagen', '250.50']", csv: "['101', 'Copenhagen', '250.50']", note: "A clean line: both give 3 fields. But all three are <b>text</b>, even 250.50." },
+    { line: "103,\"Odense, Fyn\",131.75", split: "['103', '\"Odense', ' Fyn\"', '131.75']", csv: "['103', 'Odense, Fyn', '131.75']", note: "<b>Quoting</b>: the comma inside quotes is part of the city. <code>split(',')</code> cuts it in two and gives 4 fields; the <code>csv</code> module knows the quotes.", bad: true },
+    { line: "102,Aarhus,,99.00", split: "['102', 'Aarhus', '', '99.00']", csv: "['102', 'Aarhus', '', '99.00']", note: "This line from L10 p18 has <b>4 fields under a 3-column header</b>. Both readers agree; the file is broken. <code>csv.DictReader</code> puts the extra value under the key <code>None</code>.", bad: true },
+    { line: "104,Aalborg,", split: "['104', 'Aalborg', '']", csv: "['104', 'Aalborg', '']", note: "<b>Missing value</b>: it is the empty text <code>''</code>, not 0. <code>float('')</code> is a ValueError." },
+    { line: "105,Århus,80.00", split: "['105', 'Ã…rhus', '80.00']", csv: "['105', 'Ã…rhus', '80.00']", note: "<b>Encoding</b>: the file is UTF-8 but was opened as Windows cp1252, so Å becomes <code>Ã…</code>. Fix: <code>open(path, encoding='utf-8')</code>.", bad: true },
+  ];
+  function csvWidget(el) {
+    const box = h("div");
+    const draw = i => {
+      const c = CSV_LINES[i];
+      box.replaceChildren(
+        h("pre", { class: "st-out", style: "margin:8px 0" }, c.line),
+        ui.table({ head: ["Reader", "Fields you get"], code: [0, 1], rows: [["line.split(',')", c.split], ["next(csv.reader([line]))", c.csv]] }),
+        h("p", { class: "tv-now", html: c.note }));
+    };
+    el.append(seg(["clean", "quotes", "extra field", "missing", "encoding"], "Pick a CSV line", draw), box);
+    draw(0);
+  }
+
+  const COLS = ["id", "city", "amount"];
+  const PQ = [[101, "CPH", 250], [102, "AAR", 99], [103, "ODE", 125], [104, "CPH", 80], [105, "AAR", 40], [106, "ODE", 60]];
+  function parquetWidget(el) {
+    let layout = 0, query = 0;
+    const box = h("div");
+    const draw = () => {
+      const cells = [], marks = {};
+      if (layout === 0) PQ.forEach(r => r.forEach((v, c) => cells.push({ v, c, r: r[0] })));
+      else COLS.forEach((_, c) => PQ.forEach(r => cells.push({ v: r[c], c, r: r[0] })));
+      cells.forEach((x, i) => {
+        if (query === 0) marks[i] = layout === 0 ? (x.c === 2 ? "held" : "cmp") : (x.c === 2 ? "held" : "dim");
+        else marks[i] = x.r === 103 ? "held" : "dim";
+      });
+      let read, jumps, text;
+      if (query === 0 && layout === 0) { read = 18; jumps = 1; text = "Rows are stored one after another, so the amounts are mixed in with ids and cities. To sum them you read <b>every cell</b>: 18 of 18. Amber = read but not needed."; }
+      if (query === 0 && layout === 1) { read = 6; jumps = 1; text = "All amounts sit together in one chunk. Read <b>only that chunk</b>: 6 of 18 cells. With 20 columns and 10 million rows you read 1/20 of the file. That is why analysis tools like Parquet (L10 p21)."; }
+      if (query === 1 && layout === 0) { read = 3; jumps = 1; text = "Order 103 is in one place: 3 cells, one read. Fetching whole records is what row layouts (CSV, Avro, an app database) are good at."; }
+      if (query === 1 && layout === 1) { read = 3; jumps = 3; text = "The three fields of order 103 are in three different chunks: 3 cells, but <b>3 jumps</b>. Column layouts are slower for “give me one whole record”."; }
+      box.replaceChildren(
+        h("div", { style: "overflow-x:auto;padding-bottom:4px" }, D.array(cells.map(x => String(x.v)), { name: layout === 0 ? "file, by row" : "file, by column", marks, index: false })),
+        h("p", { class: "small muted", style: "margin:4px 0" }, layout === 0 ? "order: 101 CPH 250 | 102 AAR 99 | …" : "order: all ids | all cities | all amounts"),
+        ui.table({ head: ["Cells read", "Places to jump to"], num: [0, 1], rows: [[read + " of 18", String(jumps)]] }),
+        h("p", { class: "tv-now", html: text }),
+        D.legend([["held", "needed and read"], ["cmp", "read, not needed"], ["dim", "skipped"]]));
+    };
+    el.append(row(seg(["Row layout (CSV)", "Column layout (Parquet)"], "Layout", i => { layout = i; draw(); }),
+      seg(["SUM(amount)", "all of order 103"], "Query", i => { query = i; draw(); })), box);
+    draw();
+  }
+
+  const formats = {
+    id: "de-formats",
+    title: "File formats",
+    summary: "Structure vs format; CSV, JSON, XML, Parquet and Avro with their traps; serialization vs layout vs compression; schema drift; small mistakes that break big numbers.",
+    sources: "L10 p17–27",
+    blocks: [
+      { type: "h", text: "Structure is not format", sub: "L10 p17. Structure = what the information looks like. Format = how it is written down." },
+      { type: "table", head: ["Structure", "Means", "Tiny example"], rows: [
+        ["Structured", "fixed columns, fixed types", "a sales table: order_id, city, total_dkk"],
+        ["Semi-structured", "named fields, can nest, can vary", "a JSON answer from an API"],
+        ["Unstructured", "no table shape", "images, PDFs, free text"],
+      ] },
+      `<p>A CSV file is a <b>format</b>; a relational table is a <b>data model</b>. The same table can be written as CSV, JSON or Parquet.</p>`,
+
+      { type: "h", text: "CSV: simple, but every value is text", sub: "L10 p18" },
+      { type: "widget", title: "split(',') vs the csv module", intro: "Pick a line. Each one hides a classic CSV trap.", render: csvWidget },
+      {
+        type: "tryit",
+        title: "Read the slide's CSV",
+        task: "This is the CSV from L10 p18, plus a quoted city. Run it and look at row 102. Then try <code>float(row['total_dkk'])</code> for each row.",
+        code: `
+          import csv
+          import io
+
+          text = """order_id,city,total_dkk
+          101,Copenhagen,250.50
+          102,Aarhus,,99.00
+          103,"Odense, Fyn",131.75"""
+
+          for row in csv.DictReader(io.StringIO(text)):     # io.StringIO: treat the text like a file
+              print(row)`,
+        expectOutput: "{'order_id': '101', 'city': 'Copenhagen', 'total_dkk': '250.50'}\n{'order_id': '102', 'city': 'Aarhus', 'total_dkk': '', None: ['99.00']}\n{'order_id': '103', 'city': 'Odense, Fyn', 'total_dkk': '131.75'}",
+        hint: "Row 102 has an empty <code>total_dkk</code> (<code>''</code>), so <code>float('')</code> raises ValueError. The 99.00 went to the key <code>None</code>.",
+      },
+      { type: "callout", kind: "warn", title: "CSV has no schema contract", html: "<p>Nothing in the file says “total_dkk is a number” (L10 p18). Watch for quoting, missing values, encoding and types that a tool guesses for you.</p>" },
+
+      { type: "h", text: "JSON: nested and flexible", sub: "L10 p19" },
+      { type: "table", head: ["Situation", "JSON", "In Python", "<code>o.get('delivery')</code>"], rows: [
+        ["key with a value", "<code>\"delivery\": {\"city\": \"Copenhagen\"}</code>", "a dict inside the dict", "<code>{'city': 'Copenhagen'}</code>"],
+        ["key with null", "<code>\"delivery\": null</code>", "<code>None</code>", "<code>None</code>"],
+        ["key missing", "(no delivery key)", "<code>'delivery' in o</code> is False", "<code>None</code>"],
+      ] },
+      `<p>Missing and null look the same through <code>.get()</code>, but they mean different things: “we sent no delivery info” vs “we know there is no delivery”. Use <code>in</code> to tell them apart.</p>`,
+      {
+        type: "tryit",
+        title: "Missing key vs null",
+        task: "Run it. Then print each order's city without crashing: <code>Copenhagen</code>, <code>no delivery</code> (null), <code>unknown</code> (missing key).",
+        code: `
+          import json
+
+          text = '''[
+            {"order_id": 101, "total_dkk": 250.5, "tags": ["new", "mobile"], "delivery": {"city": "Copenhagen"}},
+            {"order_id": 102, "total_dkk": 99.0, "tags": [], "delivery": null},
+            {"order_id": 103, "total_dkk": 131.75, "tags": ["new"]}
+          ]'''
+
+          orders = json.loads(text)                         # JSON text -> list of dicts
+          for o in orders:
+              print(o["order_id"], "delivery" in o, o.get("delivery"))
+
+          print(orders[0]["delivery"]["city"])              # nested: dict inside a dict`,
+        hint: "First ask <code>if \"delivery\" not in o</code>. Then <code>elif o[\"delivery\"] is None</code>. Else read <code>o[\"delivery\"][\"city\"]</code>.",
+        solution: `
+          import json
+
+          text = '''[
+            {"order_id": 101, "total_dkk": 250.5, "tags": ["new", "mobile"], "delivery": {"city": "Copenhagen"}},
+            {"order_id": 102, "total_dkk": 99.0, "tags": [], "delivery": null},
+            {"order_id": 103, "total_dkk": 131.75, "tags": ["new"]}
+          ]'''
+
+          orders = json.loads(text)
+          for o in orders:
+              if "delivery" not in o:                       # key missing
+                  city = "unknown"
+              elif o["delivery"] is None:                   # key there, value null
+                  city = "no delivery"
+              else:
+                  city = o["delivery"]["city"]
+              print(o["order_id"], city)`,
+        solutionNote: "Prints 101 Copenhagen · 102 no delivery · 103 unknown. <code>o[\"delivery\"][\"city\"]</code> on order 102 would be <code>None[\"city\"]</code>: TypeError.",
+      },
+
+      { type: "h", text: "XML: the same idea with tags", sub: "L10 p20" },
+      { type: "table", head: ["JSON", "XML"], code: [0, 1], rows: [[
+        '{"order_id": 101, "city": "Copenhagen",\n "total": 250.50, "currency": "DKK"}',
+        '<order id="101">\n  <city>Copenhagen</city>\n  <total currency="DKK">250.50</total>\n</order>',
+      ]] },
+      {
+        type: "tryit",
+        title: "Read XML with ElementTree",
+        task: "Run it. Attributes (inside the tag) are read with <code>.get()</code>, child elements with <code>.find()</code>. Then print the currency only.",
+        code: `
+          import xml.etree.ElementTree as ET
+
+          text = '<order id="101"><city>Copenhagen</city><total currency="DKK">250.50</total></order>'
+
+          order = ET.fromstring(text)              # the <order> element
+          print(order.get("id"))                   # an attribute: '101' (text!)
+          print(order.find("city").text)           # a child element's text
+
+          total = order.find("total")
+          print(total.text, total.get("currency"))
+          print(float(total.text) * 2)             # parse before maths`,
+        expectOutput: "101\nCopenhagen\n250.50 DKK\n501.0",
+      },
+
+      { type: "h", text: "Parquet and Avro: binary formats", sub: "L10 p21–22" },
+      { type: "widget", title: "Row vs column layout", intro: "Six orders, three columns, stored as one strip of cells. Change the layout and the question.", render: parquetWidget },
+      { type: "code", caption: "Avro: every file carries a schema (L10 p22, simplified)", code: `
+          record Order:
+              order_id: long        # whole number
+              city: string
+              amount: double        # decimal number` },
+      `<p>Avro stores <b>typed rows</b> with the writer's schema, so a reader knows <code>amount</code> is a number. Good for streams of events. The price: someone must manage schema changes.</p>`,
+      { type: "table", caption: "Compare the five (L10 p23)", head: ["Format", "Shape", "Human-readable", "Best fit", "Main catch"], rows: [
+        ["CSV", "flat rows", "yes", "simple export", "weak types"],
+        ["JSON", "nested fields", "yes", "APIs, events", "schema can vary"],
+        ["XML", "tree of tags", "yes", "system exchange", "wordy"],
+        ["Parquet", "binary, by column", "no", "big analysis", "not for hand-editing"],
+        ["Avro", "binary, by row", "no", "typed event records", "schema management"],
+      ] },
+
+      { type: "h", text: "Serialization, layout, compression", sub: "L10 p24. Three different problems." },
+      { type: "table", head: ["Idea", "Solves", "Tiny example"], rows: [
+        ["Serialization", "turn a Python value into bytes (and back)", "<code>json.dumps([1, 2])</code> → <code>'[1, 2]'</code>"],
+        ["File layout", "which bytes sit next to each other", "by row (CSV) vs by column (Parquet)"],
+        ["Compression", "fewer bytes to store and send", "58,100 bytes → about 2,600 (costs CPU)"],
+      ] },
+      {
+        type: "tryit",
+        title: "Serialize, compress, and back",
+        task: "Run it. Repetitive data compresses very well. Then change <code>\"Copenhagen\"</code> to <code>f\"city{i}\"</code> and see the compressed size grow.",
+        code: `
+          import json
+          import zlib
+
+          orders = [{"order_id": 100 + i, "city": "Copenhagen", "amount": 250.5} for i in range(1000)]
+
+          data = json.dumps(orders).encode("utf-8")      # serialize: list of dicts -> bytes
+          small = zlib.compress(data)                    # compress: fewer bytes
+
+          print(len(data), "bytes as JSON text")
+          print(len(small), "bytes compressed")
+
+          back = json.loads(zlib.decompress(small))      # and all the way back
+          print(back[0], back == orders)`,
+        solutionNote: "In Python 3.12 this prints 58100 bytes, about 2600 compressed (the exact number depends on the zlib version), then the first order and True.",
+      },
+      { type: "table", caption: "How to choose (L10 p25)", head: ["Ask", "Tiny example"], rows: [
+        ["Who reads it?", "a spreadsheet user → CSV; a SQL engine → Parquet"],
+        ["What shape is it?", "nested orders with item lists → JSON"],
+        ["What is the workload?", "summing one column of 10 M rows → Parquet"],
+        ["What are the limits?", "an old system only accepts XML"],
+      ] },
+
+      { type: "h", text: "Schema drift: the API changed", sub: "L10 p26" },
+      { type: "table", head: ["Yesterday", "Today"], code: [0, 1], rows: [['{"id": 7, "price": 49.5}', '{"id": 7, "unit_price": "49.5"}']] },
+      {
+        type: "tryit",
+        title: "Make get_price survive the change",
+        task: "Run it, read the error, then make <code>get_price</code> work for <b>both</b> shapes.",
         code: `
           old = {"id": 7, "price": 49.5}               # yesterday
           new = {"id": 7, "unit_price": "49.5"}        # today: new name, and it is text
@@ -593,34 +1057,641 @@
 
           print(get_price(old) * 2)                    # 99.0
           print(get_price(new) * 2)                    # 99.0`,
-        solutionNote: "Without <code>float()</code>, <code>'49.5' * 2</code> would give the text <code>'49.549.5'</code>, not 99.0.",
+        solutionNote: "Without <code>float()</code>, <code>'49.5' * 2</code> would give the text <code>'49.549.5'</code>. The slide's real answer: <b>contract-test</b> the expected fields and types, so a change fails loudly in a test, not silently in a report.",
       },
 
-      { type: "h", text: "Where data is stored", sub: "L10 p28–36" },
+      { type: "h", text: "Small format mistakes, big errors", sub: "L10 p27" },
+      { type: "table", head: ["Area", "Rule", "Tiny example"], rows: [
+        ["Dates", "unambiguous format + explicit timezone", "<code>05/11/2026</code>: 5 Nov or 11 May? <code>2026-11-05T08:00:00+00:00</code> is clear"],
+        ["Units", "keep currency and units explicit", "250 DKK + 250 EUR is not 500 of anything"],
+        ["Types", "parse numbers before adding", "<code>'250.50' * 2</code> → <code>'250.50250.50'</code>"],
+        ["Missing", "unknown is not zero: reject, impute or flag", "a missing amount as 0 pulls the average down"],
+      ] },
+      {
+        type: "tryit",
+        title: "Dates: ISO text sorts right, and timezones matter",
+        task: "Run it. Day/month text sorts 5 Nov before 12 Oct. ISO (year-month-day) sorts correctly even as text.",
+        code: `
+          from datetime import datetime
+
+          a = datetime.fromisoformat("2026-11-05T08:00:00+00:00")   # 08:00 in UTC
+          b = datetime.fromisoformat("2026-11-05T09:00:00+01:00")   # 09:00 in Copenhagen
+          print(a == b)                                             # the same moment?
+
+          print(sorted(["05/11/2026", "12/10/2026"]))               # day/month/year as text
+          print(sorted(["2026-11-05", "2026-10-12"]))               # ISO as text`,
+        expectOutput: "True\n['05/11/2026', '12/10/2026']\n['2026-10-12', '2026-11-05']",
+      },
+      { type: "mistakes", items: [
+        { title: "Splitting CSV by hand", wrong: "fields = line.split(',')", right: "fields = next(csv.reader([line]))", why: "A quoted <code>\"Odense, Fyn\"</code> becomes two fields with <code>split</code>." },
+        { title: "Doing maths on CSV text", wrong: "row = '101,CPH,250.50'.split(',')\nprint(row[2] * 2)    # '250.50250.50'", right: "print(float(row[2]) * 2)   # 501.0", why: "Every CSV field is text. Parse it first." },
+        { title: "Treating missing as zero", wrong: "amount = float(text or 0)   # '' becomes 0.0", right: "if text == '':\n    rejected.append(order_id)   # flag it", why: "Unknown is not 0. A zero would pull the average down (L10 p27)." },
+        { title: "Adding different units", wrong: "total = 250 + 250   # DKK + EUR", right: "total = 250 + 250 * eur_to_dkk", why: "250 DKK + 250 EUR is not 500 of anything (L10 p27)." },
+        { title: "Trusting a field name forever", wrong: "price = record['price']   # KeyError today", right: "price = record.get('price')\nif price is None:\n    price = float(record['unit_price'])", why: "APIs change (schema drift). Check the keys, test the contract (L10 p26)." },
+        { title: "<code>.get(key, default)</code> on a null", wrong: "o.get('delivery', 'none')   # expect 'none'", right: "o.get('delivery') is None   # covers both", why: "The default is used only when the key is <b>missing</b>. A key with null gives None." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "A dashboard sums one column over 10 million rows every hour. Which format fits best?", options: ["CSV", "JSON", "Parquet", "XML"], answer: 2,
+        wrong: { 0: "CSV is row-by-row text: it must read every column of every row.", 1: "JSON is for flexible, nested records, e.g. API answers.", 3: "XML is wordy markup for exchange between systems." },
+        hint: "Which format stores data by column?", explain: "Parquet stores each column together and compressed, so summing one column reads only that column (L10 p21)." },
+      { type: "mc", q: "An API answer like <code>{\"id\": 7, \"tags\": [\"new\"], \"delivery\": {\"city\": \"CPH\"}}</code> is…", options: ["structured", "semi-structured", "unstructured"], answer: 1,
+        hint: "Named fields that can nest.", explain: "Named, nested, flexible fields = semi-structured (L10 p17)." },
+      { type: "predict", q: "What does this print?", code: `
+          import json
+          o = json.loads('{"order_id": 102, "delivery": null}')
+          print(o.get("delivery", "none"))`, answer: "None",
+        hint: "The key <code>delivery</code> is there. When is the default used?", explain: "The key exists with the value null → <code>None</code>. The default <code>'none'</code> is only for a missing key." },
+      { type: "predict", q: "What does this print?", code: "row = '101,CPH,250.50'.split(',')\nprint(row[2] * 2)", answer: "250.50250.50",
+        hint: "What type is <code>row[2]</code>? What does <code>*</code> do to that type?", explain: "<code>split</code> gives text, so <code>row[2]</code> is <code>'250.50'</code>. Text times 2 repeats it. <code>float(row[2]) * 2</code> would give 501.0." },
+      { type: "write", q: "Write <code>check_schema(record, schema)</code>. <code>schema</code> maps field names to types, e.g. <code>{\"id\": int, \"price\": float}</code>. <b>Return</b> a list of problems: <code>\"missing price\"</code> for a missing field, <code>\"price should be float\"</code> for a wrong type. Empty list = OK.",
+        starter: `
+          def check_schema(record, schema):
+              problems = []
+              # loop over schema.items(); check "in" first, then isinstance()
+              return problems
+
+          print(check_schema({"id": 7, "unit_price": "49.5"}, {"id": int, "price": float}))   # ['missing price']`,
+        checks: [["check_schema({'id': 7, 'price': 49.5}, {'id': int, 'price': float})", "[]"], ["check_schema({'id': 7, 'unit_price': '49.5'}, {'id': int, 'price': float})", "['missing price']"], ["check_schema({'id': '7', 'price': 49.5}, {'id': int, 'price': float})", "['id should be int']"]],
+        solution: `
+          def check_schema(record, schema):
+              problems = []
+
+              for field, kind in schema.items():               # e.g. ('price', float)
+                  if field not in record:
+                      problems.append("missing " + field)
+                  elif not isinstance(record[field], kind):
+                      problems.append(field + " should be " + kind.__name__)   # float.__name__ is 'float'
+
+              return problems`,
+        hint: "<code>for field, kind in schema.items():</code>. Use <code>if field not in record</code>, then <code>elif not isinstance(record[field], kind)</code>. <code>kind.__name__</code> gives the text <code>'float'</code>.",
+        explain: "This is a tiny <b>contract test</b> (L10 p26): it catches schema drift before the numbers go wrong." },
+      { type: "mc", q: "Which word means “turn a Python dict into bytes to send”?", options: ["compression", "serialization", "partitioning", "layout"], answer: 1,
+        hint: "L10 p24: three ideas.", explain: "Serialization encodes a value as bytes. Compression makes bytes fewer; layout decides their order." },
+    ],
+  };
+
+  /* ================================================================
+     TOPIC 4: Storage (L10 p28–36)
+     ================================================================ */
+  const GB_ORDERS = [[101, "Copenhagen", 250.5], [102, "Aarhus", 99.0], [103, "Odense", 125.0], [104, "Copenhagen", 80.0]];
+  function gbSteps() {
+    const S = [], tot = {}, fmt = v => (Number.isInteger(v) ? v.toFixed(1) : String(v));
+    const T = () => "{" + Object.keys(tot).map(k => "'" + k + "': " + fmt(tot[k])).join(", ") + "}";
+    S.push({ line: 0, now: "Four orders. We want <code>SELECT city, SUM(total_dkk) ... GROUP BY city</code>, written as a loop.", vars: {}, cur: null, tot: {} });
+    S.push({ line: 6, now: "An empty dict: one key per city, the value is that city's sum.", vars: { totals: "{}" }, cur: null, tot: {} });
+    GB_ORDERS.forEach(([id, city, amt], i) => {
+      const iv = { order_id: String(id), city: "'" + city + "'", total_dkk: fmt(amt), totals: T() };
+      S.push({ line: 7, now: `Row ${i + 1}: order ${id} from ${city}, ${fmt(amt)} DKK.`, vars: iv, cur: i, tot: Object.assign({}, tot) });
+      if (!(city in tot)) {
+        S.push({ line: 8, now: `Is '${city}' in totals? <b>No</b>: first order from this city.`, cur: i, tot: Object.assign({}, tot) });
+        tot[city] = 0;
+        S.push({ line: 9, now: `Start its sum at 0.`, vars: Object.assign({}, iv, { totals: T() }), cur: i, tot: Object.assign({}, tot), hot: city });
+      } else {
+        S.push({ line: 8, now: `Is '${city}' in totals? <b>Yes</b> (sum so far ${fmt(tot[city])}). Skip the start.`, cur: i, tot: Object.assign({}, tot), hot: city });
+      }
+      const before = tot[city];
+      tot[city] += amt;
+      S.push({ line: 10, now: `${fmt(before)} + ${fmt(amt)} = <b>${fmt(tot[city])}</b>.`, vars: Object.assign({}, iv, { totals: T() }), cur: i, tot: Object.assign({}, tot), hot: city });
+    });
+    S.push({ line: 12, now: "Print the groups. Same answer as the SQL query.", print: T(), cur: null, tot: Object.assign({}, tot) });
+    return S;
+  }
+  function gbVisual(el, st) {
+    el.append(ui.table({ head: ["order_id", "city", "total_dkk"], num: [0, 2], rows: GB_ORDERS.map((r, i) => [(st.cur === i ? "▶ " : "") + r[0], r[1], r[2].toFixed(2)]) }));
+    const keys = Object.keys(st.tot);
+    el.append(h("p", { class: "eyebrow", style: "margin:10px 0 4px" }, "totals (one group per city)"),
+      keys.length ? h("div", { class: "row-wrap" }, keys.map(k => h("span", { class: "tv-pill" + (k === st.hot ? " mk-held" : "") }, k + ": " + st.tot[k].toFixed(1)))) : h("p", { class: "novars" }, "empty"));
+  }
+
+  const STAR = {
+    products: { P1: ["Coffee beans", "Coffee"], P2: ["Mug", "Kitchen"], P3: ["Filter papers", "Coffee"] },
+    dates: { 1: ["2026-11-02", "Nov"], 2: ["2026-12-01", "Dec"] },
+    sales: [[1, "P1", 2, 100], [1, "P2", 1, 80], [2, "P1", 3, 150], [2, "P3", 1, 40]],
+  };
+  function starWidget(el) {
+    const box = h("div");
+    const draw = q => {
+      const groups = {}, tag = [];
+      STAR.sales.forEach(([d, p, , rev]) => {
+        const g = q === 0 ? STAR.products[p][1] : STAR.dates[d][1];
+        tag.push(g); groups[g] = (groups[g] || 0) + rev;
+      });
+      const S = D.svg({ w: 600, h: 150, label: "star schema: a sales fact table linked to a date and a product dimension" });
+      S.box(220, 40, 160, 70, { text: "Sales fact", sub: "date_id, product_id, quantity, revenue_dkk", tone: "accent" });
+      S.box(10, 50, 150, 50, { text: "Date dimension", sub: "date, month, year", tone: q === 1 ? "cmp" : "tile" });
+      S.box(440, 50, 150, 50, { text: "Product dimension", sub: "product, category", tone: q === 0 ? "cmp" : "tile" });
+      S.arrow(218, 75, 162, 75, { label: "date_id", tone: q === 1 ? "cmp" : null });
+      S.arrow(382, 75, 438, 75, { label: "product_id", tone: q === 0 ? "cmp" : null });
+      S.text(300, 140, "facts = measurable events · dimensions = context", { small: true, muted: true });
+      box.replaceChildren(h("div", { style: "overflow-x:auto" }, S.el),
+        h("div", { class: "tv-two" },
+          ui.table({ caption: "Sales fact table", head: ["date_id", "product_id", "qty", "revenue_dkk", q === 0 ? "→ category" : "→ month"], num: [2, 3], rows: STAR.sales.map((r, i) => [String(r[0]), r[1], String(r[2]), String(r[3]), "<b>" + tag[i] + "</b>"]) }),
+          ui.table({ caption: q === 0 ? "Product dimension" : "Date dimension", head: q === 0 ? ["product_id", "product", "category"] : ["date_id", "date", "month"],
+            rows: q === 0 ? Object.keys(STAR.products).map(k => [k, ...STAR.products[k]]) : Object.keys(STAR.dates).map(k => [k, ...STAR.dates[k]]) })),
+        ui.table({ caption: q === 0 ? "Revenue by category" : "Revenue by month", head: [q === 0 ? "category" : "month", "revenue_dkk"], num: [1], rows: Object.keys(groups).map(k => [k, String(groups[k])]) }));
+    };
+    el.append(seg(["Revenue by category", "Revenue by month"], "BI question", draw), box);
+    draw(0);
+  }
+
+  const storage = {
+    id: "de-storage",
+    title: "Storage",
+    summary: "Databases, warehouses, lakes and lakehouses; keys and GROUP BY; OLTP vs OLAP; four kinds of NoSQL; facts and dimensions; raw → curated layers and partitions.",
+    sources: "L10 p28–36",
+    blocks: [
+      { type: "h", text: "Four storage families", sub: "L10 p28" },
       { type: "table", head: ["Store", "Best at", "Tiny example"], rows: [
-        ["Operational database (OLTP)", "many small, safe writes", "insert one order at checkout"],
-        ["Data warehouse (OLAP)", "big read-only summaries", "revenue per month over a million orders"],
-        ["Data lake", "keeping raw files of any kind, cheaply", "CSV, JSON, images side by side"],
-        ["Lakehouse", "lake storage + warehouse-like tables", "raw files plus reliable SQL tables"],
+        ["Operational database", "fast small reads and writes; the current state", "insert one order at checkout"],
+        ["Data warehouse", "structured analytical queries", "revenue per month over a million orders"],
+        ["Data lake", "cheap storage of raw files of any kind", "CSV, JSON, images side by side"],
+        ["Lakehouse", "lake storage + managed, reliable tables", "raw files plus SQL tables with transactions"],
       ] },
 
-      { type: "h", text: "Collecting data with an API", sub: "L10 p37–44" },
+      { type: "h", text: "Relational databases: rows, keys and SQL", sub: "L10 p29" },
+      { type: "table", head: ["Key", "Means", "Tiny example"], rows: [
+        ["Primary key", "identifies exactly one row", "<code>order_id</code> 101 in <code>orders</code>"],
+        ["Foreign key", "points at a row in another table", "<code>orders.customer_id = 7</code> → customer 7 in <code>customers</code>"],
+      ] },
+      { type: "table", caption: "One question, three ways", head: ["SQL (slide)", "pandas", "plain Python"], code: [0, 1, 2], rows: [[
+        "SELECT city, SUM(total_dkk)\nFROM orders\nGROUP BY city;",
+        'orders.groupby("city")["total_dkk"].sum()',
+        "totals = {}\nfor _, city, t in orders:\n    totals[city] = totals.get(city, 0) + t",
+      ]] },
+      {
+        type: "stepper",
+        title: "GROUP BY city, with a dict",
+        code: `
+          orders = [(101, "Copenhagen", 250.50),
+                    (102, "Aarhus", 99.00),
+                    (103, "Odense", 125.00),
+                    (104, "Copenhagen", 80.00)]
+
+          totals = {}                                   # city -> sum of total_dkk
+          for order_id, city, total_dkk in orders:
+              if city not in totals:                    # first order from this city
+                  totals[city] = 0
+              totals[city] += total_dkk
+
+          print(totals)`,
+        what: { 7: "Unpack each tuple into three names.", 8: "A new group? Then make it.", 10: "Add this row to its group." },
+        steps: gbSteps(),
+        visualTitle: "Rows and groups",
+        visual: gbVisual,
+      },
+      {
+        type: "tryit",
+        title: "The same GROUP BY in pandas",
+        task: "Run it (pandas loads the first time, a few seconds). Then change it to count the orders per city with <code>.count()</code>.",
+        code: `
+          import pandas as pd
+
+          orders = pd.DataFrame({"order_id": [101, 102, 103, 104],
+                                 "city": ["Copenhagen", "Aarhus", "Odense", "Copenhagen"],
+                                 "total_dkk": [250.50, 99.00, 125.00, 80.00]})
+
+          print(orders.groupby("city")["total_dkk"].sum())   # SELECT city, SUM(total_dkk) GROUP BY city`,
+        solutionNote: "Prints Aarhus 99.0, Copenhagen 330.5, Odense 125.0 (pandas sorts the groups by name). <code>.count()</code> gives 1, 2, 1. More on groupby: <a href=\"#datasci/groupby\">groupby</a>.",
+      },
+
+      { type: "h", text: "OLTP vs OLAP", sub: "L10 p30. A workload, not a product." },
+      { type: "table", head: ["", "OLTP (transactions)", "OLAP (analysis)"], rows: [
+        ["Typical action", "insert one order", "sum a million orders"],
+        ["Query shape", "short, touches a few rows", "scans, joins, summaries"],
+        ["Priority", "correct updates while many users write", "insight over big data"],
+        ["Example", "the shop's checkout database", "the monthly revenue dashboard (e.g. Amazon Redshift)"],
+      ] },
+
+      { type: "h", text: "NoSQL: four data models", sub: "L10 p31" },
+      { type: "table", head: ["Type", "Data looks like", "Good for"], code: [1], rows: [
+        ["Document", '{"order_id": 101, "items": [{"sku": "P1", "qty": 2}]}', "JSON-like business records"],
+        ["Key-value", 'sessions["u42"] = "cart: 3 items"', "fast lookup by one key"],
+        ["Wide-column", 's-17 | 08:00=21.4 | 08:01=21.5 | …', "huge, partitioned streams of records"],
+        ["Graph", "(Ann) -follows-> (Bo)", "things and their relationships"],
+      ] },
+      { type: "callout", kind: "warn", title: "NoSQL does not mean “no schema”", html: "<p>Your code still expects fields and types. The rules just live in the application, not the database (L10 p31).</p>" },
+
+      { type: "h", text: "Warehouses: facts and dimensions", sub: "L10 p32" },
+      { type: "widget", title: "A tiny star schema", intro: "The fact table holds the sales. A BI question joins it to one dimension and sums. Switch the question.", render: starWidget },
+      {
+        type: "tryit",
+        title: "Join a fact table to a dimension",
+        task: "Run it: revenue by category. Then change it to revenue by month using <code>dates</code>.",
+        code: `
+          products = {"P1": ("Coffee beans", "Coffee"),       # product dimension: id -> (name, category)
+                      "P2": ("Mug", "Kitchen"),
+                      "P3": ("Filter papers", "Coffee")}
+          dates = {1: ("2026-11-02", "Nov"), 2: ("2026-12-01", "Dec")}   # date dimension
+
+          sales = [(1, "P1", 2, 100), (1, "P2", 1, 80),        # fact table: date_id, product_id, quantity, revenue_dkk
+                   (2, "P1", 3, 150), (2, "P3", 1, 40)]
+
+          by_category = {}
+          for date_id, product_id, quantity, revenue_dkk in sales:
+              name, category = products[product_id]           # the join: look up by foreign key
+              if category not in by_category:
+                  by_category[category] = 0
+              by_category[category] += revenue_dkk
+
+          print(by_category)`,
+        expectOutput: "{'Coffee': 290, 'Kitchen': 80}",
+        solution: `
+          products = {"P1": ("Coffee beans", "Coffee"), "P2": ("Mug", "Kitchen"), "P3": ("Filter papers", "Coffee")}
+          dates = {1: ("2026-11-02", "Nov"), 2: ("2026-12-01", "Dec")}
+          sales = [(1, "P1", 2, 100), (1, "P2", 1, 80), (2, "P1", 3, 150), (2, "P3", 1, 40)]
+
+          by_month = {}
+          for date_id, product_id, quantity, revenue_dkk in sales:
+              day, month = dates[date_id]                     # join to the date dimension instead
+              if month not in by_month:
+                  by_month[month] = 0
+              by_month[month] += revenue_dkk
+
+          print(by_month)                                     # {'Nov': 180, 'Dec': 190}`,
+      },
+
+      { type: "h", text: "Lakes and lakehouses", sub: "L10 p33–34" },
+      { type: "table", head: ["", "Data lake", "Lakehouse"], rows: [
+        ["Stores", "raw files of any kind (CSV, JSON, Parquet, images)", "the same files…"],
+        ["Adds", "cheap, scalable, can replay old data", "…plus managed tables: metadata, transactions, schema checks"],
+        ["Risk", "no metadata or access control → a “data swamp”", "the guarantees depend on the table format and its settings"],
+      ] },
+      { type: "table", caption: "Choose for the workload (L10 p35)", head: ["Question", "Database", "Warehouse", "Lake / lakehouse"], rows: [
+        ["Main need", "run an app", "query curated metrics", "keep or analyse varied data"],
+        ["Typical data", "current records", "integrated, historical", "raw and curated files"],
+        ["Good fit", "checkout, inventory", "reports, dashboards", "exploration, ML"],
+        ["Watch out", "big analytical scans", "keeping models and loads up to date", "governance and file layout"],
+      ] },
+
+      { type: "h", text: "Layers, partitions, retention", sub: "L10 p36" },
+      () => card(chainSvg([["Raw", "as it came"], ["Staging", "checked, standard"], ["Curated", "trusted tables"], ["Serving", "shaped for users"]], "four storage layers from raw to serving", { 2: "done" })),
+      { type: "table", head: ["Layer", "Order 101 looks like"], code: [1], rows: [
+        ["Raw", "'101,CPH,250.50 '"],
+        ["Staging", "{'order_id': 101, 'city': 'Copenhagen', 'amount_dkk': 250.5}"],
+        ["Curated", "daily_revenue: ('2026-11-05', 'P1', 250.5)"],
+        ["Serving", "dashboard tile: 'Revenue today: 250.5 DKK'"],
+      ] },
+      `<p>Keep the raw layer: if a cleaning rule was wrong, you can run it again from the original.</p>`,
+      {
+        type: "tryit",
+        title: "Partition by date",
+        task: "Files go into one folder per day. A query for one day opens one folder. Run it, then think: what if you partitioned by <code>order_id</code>?",
+        code: `
+          orders = [("2026-11-04", 101, 250.5), ("2026-11-05", 102, 99.0),
+                    ("2026-11-05", 103, 131.75), ("2026-11-06", 104, 80.0)]
+
+          partitions = {}                                     # folder -> rows in it
+          for day, order_id, amount in orders:
+              folder = "orders/date=" + day + "/"
+              if folder not in partitions:
+                  partitions[folder] = []
+              partitions[folder].append((order_id, amount))
+
+          for folder, rows in partitions.items():
+              print(folder, rows)
+
+          wanted = "orders/date=2026-11-05/"
+          print("rows read for 5 Nov:", len(partitions[wanted]), "of", len(orders))`,
+        expectOutput: "orders/date=2026-11-04/ [(101, 250.5)]\norders/date=2026-11-05/ [(102, 99.0), (103, 131.75)]\norders/date=2026-11-06/ [(104, 80.0)]\nrows read for 5 Nov: 2 of 4",
+        solutionNote: "By <code>order_id</code> every order gets its own tiny folder: millions of tiny files, slow to list and open. Partition by a column you often filter on, like the date (L10 p36).",
+      },
+      { type: "mistakes", items: [
+        { title: "Big reports on the checkout database", wrong: "# run the 5-year revenue query on the live shop DB", right: "# copy to a warehouse; query there", why: "Long scans slow down the app's small, urgent writes (OLTP vs OLAP)." },
+        { title: "“NoSQL = no schema”", wrong: "doc['price'] * 2   # assume it is there", right: "price = doc.get('price')\nif price is None: ...", why: "The schema still exists; your code enforces it (L10 p31)." },
+        { title: "A lake with no metadata", wrong: "s3://bucket/final_v2_REAL.csv", right: "orders/date=2026-11-05/part-0.parquet + owner + description", why: "Without metadata and access control a lake becomes a swamp (L10 p33)." },
+        { title: "Too many tiny partitions", wrong: "orders/order_id=101/  orders/order_id=102/ …", right: "orders/date=2026-11-05/", why: "Partition by a frequently filtered column with few values, like the date (L10 p36)." },
+        { title: "Overwriting the raw data", wrong: "raw = clean(raw)   # original gone", right: "staging = clean(raw)   # raw kept", why: "Keep raw so you can re-run a fixed rule." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "Pick the store: the shop must save each order the moment a customer pays.", options: ["Operational database (OLTP)", "Data warehouse", "Data lake", "A Parquet file"], answer: 0,
+        hint: "Many small, safe writes.", explain: "Writing one order at checkout is a short transaction: OLTP (L10 p30)." },
+      { type: "mc", q: "Pick the store: monthly revenue by category for the last 5 years, for a dashboard.", options: ["Operational database", "Data warehouse", "Key-value store", "Graph database"], answer: 1,
+        hint: "Curated, historical, analytical.", explain: "Structured analytical queries over history: a warehouse (OLAP) (L10 p32, p35)." },
+      { type: "mc", q: "Pick the store: keep raw CSV, JSON and product photos cheaply for later ML.", options: ["Data warehouse", "Data lake", "Operational database", "Key-value store"], answer: 1,
+        hint: "Varied raw files, cheap, replayable.", explain: "A data lake keeps diverse raw files (L10 p33). A lakehouse adds managed tables on top." },
+      { type: "mc", q: "Pick the store: “who follows whom” among users, to suggest friends.", options: ["Document", "Key-value", "Wide-column", "Graph"], answer: 3,
+        hint: "Things and their relationships.", explain: "Nodes and edges: a graph database (L10 p31)." },
+      { type: "predict", q: "What does this print?", code: `
+          orders = [("CPH", 10), ("AAR", 5), ("CPH", 7)]
+          totals = {}
+          for city, t in orders:
+              totals[city] = totals.get(city, 0) + t
+          print(totals)`, answer: "{'CPH': 17, 'AAR': 5}",
+        hint: "<code>.get(city, 0)</code> gives 0 the first time.", explain: "CPH: 0 + 10 = 10, then 10 + 7 = 17. AAR: 5. Keys keep the order they were first added." },
+      { type: "explain", q: "In 2–3 sentences: in a star schema, what is a fact table and what is a dimension table? Give one example of each from a shop.",
+        answer: "<p>A fact table stores measurable events, one row per event, with numbers you sum and keys pointing at dimensions: for example a sales table with date_id, product_id, quantity and revenue_dkk. A dimension table gives context to describe and group those facts: for example a product table with name and category. A BI query joins the facts to a dimension and groups by it, such as revenue by category.</p>",
+        points: ["fact = measurable events (numbers + keys)", "dimension = context (who/what/when)", "query: join on the key, then group and sum"],
+        hint: "L10 p32: “Dimensions describe context; facts store measurable events.”" },
+    ],
+  };
+
+  /* ================================================================
+     TOPIC 5: APIs & data collection (L10 p37–44)
+     ================================================================ */
+  const HTTP_PARTS = [
+    { line: 0, t: "GET", what: "The <b>method</b>: what you want to do. GET = read. Collecting data is almost always GET (L10 p38)." },
+    { line: 0, t: " " },
+    { line: 0, t: "/v1/sensors", what: "The <b>path</b>: which resource. <code>v1</code> is the API version: a new v2 may change fields (schema drift)." },
+    { line: 0, t: "?limit=2", what: "A <b>query parameter</b>: options after <code>?</code>, as <code>name=value</code>, joined by <code>&amp;</code>. Here: at most 2 items per page. In Python: <code>params={\"limit\": 2}</code>." },
+    { line: 0, t: " HTTP/1.1", what: "The protocol version. You rarely touch it." },
+    { line: 1, t: "Accept: application/json", what: "A <b>header</b>: extra info. Here the client says “please answer in JSON”. Login tokens also go in headers, never in the URL." },
+    { line: 2, t: "" },
+    { line: 3, t: "HTTP/1.1 " },
+    { line: 3, t: "200 OK", what: "The <b>status code</b>: 200 means it worked. 2xx ok, 4xx your mistake, 5xx the server's problem. <code>r.raise_for_status()</code> raises an error for 4xx/5xx." },
+    { line: 4, t: "Content-Type: application/json", what: "The <b>content type</b>: what the body is. JSON here, so <code>r.json()</code> can parse it." },
+    { line: 5, t: "{\"items\": [{\"id\": 1, \"value\": 21.4}]}", what: "The <b>response body</b>: the data. <code>r.json()[\"items\"]</code> gives a list of dicts. Note: only 1 item, though we asked for 2 (L10 p39)." },
+  ];
+  function httpWidget(el) {
+    const lines = [h("div"), h("div"), h("div"), h("div"), h("div"), h("div")];
+    const panel = h("p", { class: "tv-now", "aria-live": "polite", html: "Click a highlighted part of the request or the response." });
+    const all = [];
+    HTTP_PARTS.forEach(p => {
+      if (!p.what) { lines[p.line].append(h("span", null, p.t)); return; }
+      const b = h("button", { type: "button", class: "tv-httpbtn", onclick: () => { all.forEach(x => x.classList.toggle("on", x === b)); panel.innerHTML = p.what; } }, p.t);
+      all.push(b); lines[p.line].append(b);
+    });
+    lines[2].append(h("span", { class: "tv-httpsep" }, "— response —"));
+    el.append(h("div", { class: "tv-http", role: "group", "aria-label": "HTTP request and response" }, ...lines), panel);
+  }
+
+  // the paginated collector, simulated step by step (matches API_CODE below)
+  const API_PAGES = { None: [1, 2], c2: [2, 3], c3: [4] };
+  const API_NEXT = { None: "c2", c2: "c3", c3: null };
+  function apiSteps() {
+    const S = [], rows = [], pages = { None: "", c2: "", c3: "" };
+    let received = 0, checkpoint = "—", cursor = "None", failed = false;
+    const q = c => c === "None" || c === null ? "None" : "'" + c + "'";
+    const V = more => Object.assign({ cursor: q(cursor), received: String(received), rows: "{" + rows.map(i => i + ": {…}").join(", ") + "}", checkpoint: checkpoint === "—" ? "—" : q(checkpoint) }, more || {});
+    const push = (line, now, more, extra) => S.push(Object.assign({ line, now, vars: V(more), pages: Object.assign({}, pages), rows: rows.slice(), checkpoint, cursor }, extra || {}));
+    S.push({ line: 0, now: "A fake API with 3 pages. Page <code>c2</code> repeats id 2 (a re-delivery). Page <code>c3</code> fails once with 503.", vars: {}, pages: Object.assign({}, pages), rows: [], checkpoint, cursor: null });
+    push(25, "Empty results. <code>cursor = None</code> means “give me the first page”.");
+    for (const c of ["None", "c2", "c3"]) {
+      cursor = c;
+      push(27, `Ask for page ${q(c)} (with retries).`);
+      let attempt = 0;
+      if (c === "c3" && !failed) {
+        failed = true; pages.c3 = "fail";
+        push(16, `Try 1: <code>get_page('c3')</code> answers <b>503</b> (service unavailable). Temporary: worth a retry.`, { attempt: "0", status: "503" });
+        push(17, "Is 503 == 200? <b>No</b>.", { attempt: "0", status: "503" });
+        push(19, "Back off: wait 2 ** 0 = <b>1 second</b>. Next time 2, then 4. Waiting longer each time gives the server room to recover.", { attempt: "0", status: "503", wait: "1" });
+        push(20, "Log it.", { attempt: "0", status: "503", wait: "1" }, { print: "  503 on page c3: wait 1 s, retry" });
+        attempt = 1;
+      }
+      pages[c] = "ok";
+      push(16, `Try ${attempt + 1}: <code>get_page(${q(c)})</code> answers <b>200</b> with ids ${API_PAGES[c].join(", ")}.`, { attempt: String(attempt), status: "200" });
+      push(18, "200: give the page back to the loop.", { attempt: String(attempt), status: "200" });
+      for (const id of API_PAGES[c]) {
+        const dup = rows.includes(id);
+        if (!dup) rows.push(id);
+        received++;
+        push(29, dup ? `id ${id} is <b>already</b> in <code>rows</code>: the same key is overwritten, not added. Still ${rows.length} unique.` : `Store <code>rows[${id}]</code>. ${rows.length} unique so far.`, { item: "{'id': " + id + ", …}" }, { dup: dup ? id : null });
+      }
+      checkpoint = API_NEXT[c];
+      push(31, `Save the checkpoint: <code>${q(checkpoint)}</code>. If the job crashes now, a restart continues from here instead of page 1.`);
+      push(32, "Log the page.", null, { print: `page ${c}: got ${API_PAGES[c].length}, unique so far ${rows.length}, checkpoint ${checkpoint === null ? "None" : checkpoint}` });
+      if (checkpoint === null) { push(33, "Is the checkpoint None? <b>Yes</b>: no more pages."); push(34, "<code>break</code> out of the loop."); }
+      else { push(33, `Is the checkpoint None? <b>No</b>.`); push(35, `Move on: <code>cursor = ${q(checkpoint)}</code>.`); }
+    }
+    push(37, "5 records arrived, 4 are unique. 200 OK on every page was <b>not</b> proof of a clean dataset.", null, { print: "received: 5 unique: 4" });
+    return S;
+  }
+  function apiVisual(el, st) {
+    el.append(h("div", { class: "row-wrap" }, ["None", "c2", "c3"].map(c => {
+      const s = st.pages[c];
+      return h("div", { class: "tv-page" + (st.cursor === c ? " mk-held" : s === "ok" ? " mk-done" : s === "fail" ? " mk-bad" : "") },
+        h("b", null, "page " + c), h("div", { class: "mono small" }, "ids " + API_PAGES[c].join(", ")),
+        h("div", { class: "small" }, s === "ok" ? "fetched ✓" : s === "fail" ? "503, retrying" : "not yet"));
+    })));
+    const marks = {};
+    if (st.dup != null) marks[st.rows.indexOf(st.dup)] = "cmp";
+    el.append(h("div", { style: "margin-top:10px" }, D.array(st.rows.map(String), { name: "rows (keys)", marks, index: false, emptyText: "empty" })),
+      h("p", { class: "small", style: "margin:8px 0 0" }, "checkpoint: ", h("code", null, st.checkpoint === "—" ? "not saved yet" : st.checkpoint === null ? "None" : String(st.checkpoint))));
+  }
+  const API_CODE = `
+    PAGES = {                                             # the fake API: cursor -> one page
+        None: {"items": [{"id": 1, "value": 21.4}, {"id": 2, "value": 21.9}], "next": "c2"},
+        "c2": {"items": [{"id": 2, "value": 21.9}, {"id": 3, "value": 22.3}], "next": "c3"},
+        "c3": {"items": [{"id": 4, "value": 22.0}], "next": None},
+    }
+    failures = {"c3": 1}                                  # page c3 fails once, then works
+
+    def get_page(cursor):                                 # stands in for requests.get(...)
+        if failures.get(cursor, 0) > 0:
+            failures[cursor] -= 1
+            return 503, None                              # 503 = service unavailable
+        return 200, PAGES[cursor]
+
+    def fetch_with_retry(cursor, tries=3):
+        for attempt in range(tries):
+            status, body = get_page(cursor)
+            if status == 200:
+                return body
+            wait = 2 ** attempt                           # backoff: 1, 2, 4 seconds
+            print(f"  {status} on page {cursor}: wait {wait} s, retry")
+        raise RuntimeError(f"page {cursor} failed {tries} times")
+
+    rows = {}                                             # id -> record: a repeat overwrites itself
+    received = 0
+    cursor = None                                         # None = the first page
+    while True:
+        body = fetch_with_retry(cursor)
+        for item in body["items"]:
+            rows[item["id"]] = item                       # dedupe by the stable id
+            received += 1
+        checkpoint = body["next"]                         # save progress: a restart goes on from here
+        print(f"page {cursor}: got {len(body['items'])}, unique so far {len(rows)}, checkpoint {checkpoint}")
+        if checkpoint is None:                            # no more pages
+            break
+        cursor = checkpoint
+
+    print("received:", received, "unique:", len(rows))`;
+
+  const apis = {
+    id: "de-apis",
+    title: "APIs & data collection",
+    summary: "What an API is, HTTP methods and status codes, reading a request and a response, pull/poll/push, and a collector that follows pages, retries with backoff, dedupes and checkpoints.",
+    sources: "L10 p37–44",
+    blocks: [
+      { type: "h", text: "An API is a contract", sub: "L10 p37" },
+      () => {
+        const S = D.svg({ w: 600, h: 110, label: "a Python client sends an HTTP request to an API service and gets a response" });
+        S.box(10, 25, 170, 60, { text: "Your Python code", sub: "the client / collector", tone: "accent" });
+        S.box(420, 25, 170, 60, { text: "API service", sub: "checks, then answers", tone: "tile" });
+        S.arrow(184, 42, 416, 42, { label: "HTTP request (GET …)" });
+        S.arrow(416, 72, 184, 72, { label: "HTTP response (JSON …)" });
+        return card(S.el, "The API defines what you may ask and what you get back. The answer may be JSON, XML or something else.");
+      },
       { type: "table", head: ["HTTP method", "Means", "Example"], code: [2], rows: [
         ["GET", "read", "GET /v1/orders/101"],
         ["POST", "create / submit", "POST /v1/orders"],
-        ["PATCH", "change part of it", "PATCH /v1/orders/101"],
+        ["PUT / PATCH", "replace / change part of it", "PATCH /v1/orders/101"],
         ["DELETE", "remove", "DELETE /v1/orders/101"],
+      ] },
+      `<p>HTTP = HyperText Transfer Protocol. Collecting public records is mostly GET; always follow the API's documentation (L10 p38).</p>`,
+
+      { type: "h", text: "Read a request and its response", sub: "L10 p39" },
+      { type: "widget", title: "Click the parts", render: httpWidget },
+      { type: "table", caption: "Status codes you will meet", head: ["Code", "Means", "Retry?"], rows: [
+        ["200 OK", "worked", "—"],
+        ["201 Created", "a POST made something", "—"],
+        ["400 Bad Request", "your request is malformed", "no: fix the request"],
+        ["401 / 403", "not logged in / not allowed", "no: fix the credentials"],
+        ["404 Not Found", "no such resource", "no"],
+        ["429 Too Many Requests", "rate limit hit", "<b>yes</b>, after waiting"],
+        ["500 / 503", "server error / unavailable", "<b>yes</b>, with backoff"],
       ] },
       { type: "code", caption: "L10 p42 (shown only: the requests library does not run in this browser)", code: `
           import requests
+          import pandas as pd
 
-          url = "https://api.example.org/v1/sensors"              # 1. where to ask
-          r = requests.get(url, params={"limit": 100}, timeout=10) # 2. ask (GET)
-          r.raise_for_status()                                    # 3. stop if it failed
-          rows = r.json()["items"]                                # 4. JSON text -> Python list of dicts` },
-      { type: "callout", kind: "warn", title: "200 OK is not the whole dataset", html: "<p>An API may give 100 rows per page. You must follow the pages, respect rate limits, retry with a pause, and drop duplicates (L10 p40–44).</p>" },
+          url = "https://api.example.org/v1/sensors"               # 1. where to ask
+          r = requests.get(url, params={"limit": 100}, timeout=10)  # 2. GET; give up after 10 s
+          r.raise_for_status()                                     # 3. error if 4xx/5xx
+          rows = r.json()["items"]                                 # 4. JSON text -> list of dicts
+          df = pd.DataFrame(rows)                                  # 5. a table to analyse
 
-      { type: "h", text: "ETL: Extract → Transform → Load", sub: "L10 p45–50. Step through a tiny pipeline: a loop you could write yourself." },
+          print(df["temperature"].mean())` },
+
+      { type: "h", text: "Collecting needs care", sub: "L10 p40–41" },
+      { type: "table", head: ["Area", "Do this", "Tiny example"], rows: [
+        ["Access and safety", "approved credentials, least privilege; secrets outside the code; HTTPS; only the fields you may collect", "<code>key = os.environ[\"API_KEY\"]</code>, not typed in the notebook"],
+        ["Completeness", "follow pagination; keep a last-updated cursor; handle null or changed fields", "page 1 has 100 of 2,350 rows"],
+        ["Reliability", "timeouts; respect rate limits; retry temporary failures with backoff", "<code>timeout=10</code>; 429 → wait, then retry"],
+      ] },
+      { type: "table", caption: "Pull, poll or push", head: ["Pattern", "How", "Watch out"], rows: [
+        ["Pull on demand", "you send GET when you need it", "fine for a bounded download"],
+        ["Scheduled polling", "you ask every N minutes “anything new since X?”", "needs a cursor and rate-limit handling"],
+        ["Push (webhook)", "the provider calls <b>your</b> endpoint when something changes", "check the sender; expect repeats"],
+      ] },
+      { type: "callout", kind: "rule", title: "Whatever the pattern", html: "<p>Paginate where needed, checkpoint your progress, and deduplicate deliveries (L10 p41). <b>A 200 response is not proof of a complete dataset</b> (L10 p40).</p>" },
+
+      { type: "h", text: "A collector that survives the real world", sub: "L10 p40–44. Pages, a failure, a repeat, a checkpoint." },
+      {
+        type: "stepper",
+        title: "Follow the pages",
+        code: API_CODE,
+        what: { 16: "One call to the (fake) API.", 19: "Exponential backoff: wait twice as long each time.", 29: "A dict keyed by id cannot hold the same id twice.", 31: "Remember where we are.", 33: "The last page has no next cursor." },
+        steps: apiSteps(),
+        visualTitle: "Pages, rows, checkpoint",
+        visual: apiVisual,
+        legend: [["held", "current page"], ["done", "fetched"], ["bad", "failed once"], ["cmp", "repeat overwritten"]],
+      },
+      {
+        type: "tryit",
+        title: "Run the collector, then break it",
+        task: "Run it. Then try: (1) <code>failures = {\"c3\": 3}</code>: what happens after 3 tries? (2) replace <code>rows</code> with a list and <code>append</code>: how many rows now?",
+        code: API_CODE,
+        expectOutput: "page None: got 2, unique so far 2, checkpoint c2\npage c2: got 2, unique so far 3, checkpoint c3\n  503 on page c3: wait 1 s, retry\npage c3: got 1, unique so far 4, checkpoint None\nreceived: 5 unique: 4",
+        solutionNote: "(1) Three 503s → <code>RuntimeError: page c3 failed 3 times</code>: stop loudly, and the checkpoint <code>c3</code> tells a restart where to go on. (2) A list keeps the repeat: 5 rows, so id 2 would be counted twice. A real collector would also <code>time.sleep(wait)</code>; it is skipped here so it runs fast.",
+      },
+      { type: "h", text: "Design for duplicates, failure and restart", sub: "L10 p43–44" },
+      () => card(chainSvg([["Receive", "event id + data"], ["Validate", "schema, required"], ["Deduplicate", "stable key / upsert"], ["Checkpoint", "cursor or offset"]], "receive, validate, deduplicate, checkpoint")),
+      { type: "table", caption: "Choose the right connector (L10 p43)", head: ["Source", "Collect with", "Risk", "Useful metadata"], rows: [
+        ["CSV file", "scheduled import", "same file twice / bad encoding", "file name, upload time"],
+        ["Database", "SQL / CDC connector", "missed updates / load on the source", "primary key, change time"],
+        ["REST API", "HTTP requests", "pagination / rate limits", "request time, cursor"],
+        ["Sensor events", "message stream", "out-of-order events", "event id, timestamp"],
+      ] },
+      { type: "callout", kind: "note", title: "Upsert", html: "<p>Update the row if the key exists, insert it if not (L10 p44). In Python: <code>table[row[\"id\"]] = row</code>. Demo on <a href=\"#traversal/de-etl\">ETL pipelines</a>.</p>" },
+      { type: "mistakes", items: [
+        { title: "Only the first page", wrong: "rows = r.json()['items']   # done!", right: "while cursor is not None:\n    ...  # follow 'next'", why: "Page 1 is not the dataset. Follow the pages (L10 p40)." },
+        { title: "No timeout", wrong: "requests.get(url)", right: "requests.get(url, timeout=10)", why: "Without it a dead server can hang your job forever." },
+        { title: "Retrying everything, instantly", wrong: "while status != 200:\n    status = get()", right: "retry only 429/5xx, wait 1, 2, 4 s, give up after 3", why: "A 404 never gets better; hammering a busy server makes it worse." },
+        { title: "Secrets in the notebook", wrong: "API_KEY = 'sk-12345'", right: "API_KEY = os.environ['API_KEY']", why: "Store secrets outside source code (L10 p40)." },
+        { title: "Appending deliveries", wrong: "rows.append(item)", right: "rows[item['id']] = item", why: "Retries and replays deliver the same record again (L10 p44)." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "In <code>GET /v1/sensors?limit=2 HTTP/1.1</code>, what is <code>limit=2</code>?", options: ["the path", "a query parameter", "a header", "the status code"], answer: 1,
+        hint: "It comes after the <code>?</code>.", explain: "Options after <code>?</code> are query parameters (L10 p39). In requests: <code>params={\"limit\": 2}</code>." },
+      { type: "mc", q: "The API answers <b>429 Too Many Requests</b>. What should the collector do?", options: ["Stop: the data is gone", "Retry at once in a loop", "Wait (back off), then retry", "Switch to POST"], answer: 2,
+        hint: "Rate limit = slow down.", explain: "Respect the rate limit: wait, then retry, waiting longer each time (L10 p40)." },
+      { type: "mc", q: "The shop's payment provider calls <b>your</b> URL whenever a payment changes. Which pattern?", options: ["Pull on demand", "Scheduled polling", "Push / webhook"], answer: 2,
+        hint: "Who starts the call?", explain: "The provider pushes to your endpoint: a webhook. Verify the sender and expect repeats (L10 p41)." },
+      { type: "predict", q: "What does this print?", code: `
+          deliveries = [{"id": 1}, {"id": 2}, {"id": 1}, {"id": 3}, {"id": 2}]
+          rows = {}
+          for d in deliveries:
+              rows[d["id"]] = d
+          print(len(deliveries), len(rows))`, answer: "5 3",
+        hint: "A dict cannot hold the same key twice.", explain: "5 deliveries, but only ids 1, 2, 3: 3 unique rows." },
+      { type: "write", q: "Write <code>collect(pages)</code>. <code>pages</code> maps a cursor to <code>{\"items\": [...], \"next\": ...}</code>; the first cursor is <code>None</code>. Follow <code>next</code> until it is None and <b>return</b> the list of unique ids in the order first seen.",
+        starter: `
+          def collect(pages):
+              seen = []
+              cursor = None
+              # loop: take pages[cursor], add new ids, move cursor to "next"; stop when it is None
+              return seen
+
+          P = {None: {"items": [{"id": 1}, {"id": 2}], "next": "b"},
+               "b": {"items": [{"id": 2}, {"id": 3}], "next": None}}
+          print(collect(P))   # [1, 2, 3]`,
+        checks: [["collect({None: {'items': [{'id': 1}, {'id': 2}], 'next': 'b'}, 'b': {'items': [{'id': 2}, {'id': 3}], 'next': None}})", "[1, 2, 3]"], ["collect({None: {'items': [], 'next': None}})", "[]"], ["collect({None: {'items': [{'id': 5}], 'next': 'x'}, 'x': {'items': [{'id': 5}], 'next': 'y'}, 'y': {'items': [{'id': 6}], 'next': None}})", "[5, 6]"]],
+        solution: `
+          def collect(pages):
+              seen = []
+              cursor = None
+
+              while True:
+                  page = pages[cursor]
+                  for item in page["items"]:
+                      if item["id"] not in seen:        # dedupe
+                          seen.append(item["id"])
+                  cursor = page["next"]
+                  if cursor is None:                    # last page
+                      break
+
+              return seen`,
+        hint: "<code>while True:</code> → <code>page = pages[cursor]</code> → loop the items → <code>cursor = page[\"next\"]</code> → <code>if cursor is None: break</code>. Return after the loop.",
+        explain: "Same shape as the collector above: follow pages, dedupe by id. (A set for <code>seen</code> would be faster; the list keeps the order.)" },
+      { type: "mc", q: "Every page answered 200 OK. Is the dataset complete?", options: ["Yes: 200 means success", "Not necessarily: you may have missed pages, got repeats, or changed fields"], answer: 1,
+        hint: "L10 p40, last line.", explain: "A successful HTTP response is not proof of a complete dataset. Check counts, pages and duplicates." },
+    ],
+  };
+
+  /* ================================================================
+     TOPIC 6: ETL pipelines (L10 p45–51)
+     ================================================================ */
+  const RUNS = [
+    { name: "Normal day", st: ["ok", "ok", "ok", "ok"], log: ["06:00 extract: orders_2026-11-05.csv, 1,000 rows", "06:01 validate: 3 rows quarantined (0.3 %), under the 5 % limit", "06:02 transform: revenue per product, 42 products", "06:03 load: wrote daily_revenue; row count checked; published ✓"],
+      note: "Everything passed. The 3 bad rows are kept in a quarantine table, not thrown away." },
+    { name: "Source late", st: ["wait", "ok", "ok", "ok"], log: ["06:00 extract: file not there yet (dependency not met) → retry in 15 min", "06:15 extract: still missing → retry", "06:30 extract: found, 1,000 rows", "06:31 validate ✓ · 06:32 transform ✓ · 06:33 load ✓ published"],
+      note: "<b>Orchestration</b>: the scheduler waits for the dependency and retries. Nothing ran on missing data (L10 p49)." },
+    { name: "Bad data spike", st: ["ok", "bad", "skip", "skip"], log: ["06:00 extract: 1,000 rows", "06:01 validate: 412 amounts are not numbers (41 %) > 5 % limit ✗", "06:01 STOP. Alert sent to the data team.", "yesterday's daily_revenue stays published"],
+      note: "<b>Running without an exception is not proof</b>: pandas would have coerced the 412 rows to NaN and dropped them silently. A validation threshold turns that into a loud stop (L10 p50)." },
+    { name: "Load crashes", st: ["ok", "ok", "ok", "bad"], log: ["06:00–06:02 extract, validate, transform ✓", "06:03 load: disk full after 600 of 1,000 rows ✗", "06:03 nothing published; alert sent", "07:00 re-run from the start: upsert by key, so no doubles → published ✓"],
+      note: "Publish only validated output. Because the load is <b>idempotent</b> (upsert by key), the re-run is safe (L10 p50)." },
+  ];
+  function runWidget(el) {
+    const box = h("div");
+    const tone = { ok: "done", bad: "swap", wait: "cmp", skip: null };
+    const word = { ok: "✓", bad: "✗ failed", wait: "waiting…", skip: "not run" };
+    const draw = i => {
+      const r = RUNS[i];
+      const S = D.svg({ w: 600, h: 86, label: "pipeline stages: extract, validate, transform, load" });
+      ["Extract", "Validate", "Transform", "Load"].forEach((t, k) => {
+        S.box(6 + k * 150, 14, 128, 58, { text: t, sub: word[r.st[k]], tone: tone[r.st[k]], faded: r.st[k] === "skip" });
+        if (k < 3) S.arrow(136 + k * 150, 43, 154 + k * 150, 43, {});
+      });
+      box.replaceChildren(h("div", { style: "overflow-x:auto" }, S.el), h("pre", { class: "st-out", style: "white-space:pre-wrap;margin:8px 0" }, r.log.join("\n")), h("p", { class: "tv-now", html: r.note }));
+    };
+    el.append(seg(RUNS.map(r => r.name), "Pick a run", draw), box);
+    draw(0);
+  }
+
+  const etl = {
+    id: "de-etl",
+    title: "ETL pipelines",
+    summary: "Extract → (validate) → transform → load, as a loop and in pandas; ETL vs ELT; orchestration and monitoring; the run contract; idempotent loads.",
+    sources: "L10 p45–51",
+    blocks: [
+      { type: "h", text: "A pipeline is more than a script", sub: "L10 p45" },
+      () => card(chainSvg([["Extract", "read sources"], ["Validate", "schema, quality"], ["Transform", "clean, join, sum"], ["Load", "write target"]], "extract, validate, transform, load"),
+        "Around it: source contracts, retries, checkpoints, lineage, validation and alerts. A pipeline runs again tomorrow, unattended; a script ran once on your laptop."),
+
+      { type: "h", text: "ETL step by step", sub: "L10 p46. A loop you could write yourself." },
       {
         type: "stepper",
         title: "Clean four raw order rows",
@@ -654,14 +1725,10 @@
         visualTitle: "The four rows",
         visual: etlVisual,
       },
-      { type: "table", head: ["ETL", "ELT"], rows: [
-        ["Extract → <b>Transform</b> → Load", "Extract → Load → <b>Transform</b>"],
-        ["clean first, then store the clean data", "store the raw data first, clean it inside the warehouse"],
-      ] },
       {
         type: "tryit",
         title: "A real mini ETL with the csv module",
-        task: "Same idea on CSV text (L10 p46–47 does it with pandas). Run it. Then add a row <code>104,CPH,</code> (empty amount) and see where it ends up.",
+        task: "Same idea on CSV text. Run it. Then add a row <code>104,CPH,</code> (empty amount) and see where it ends up.",
         code: `
           import csv
           import io
@@ -696,26 +1763,174 @@
           print("total:", sum(r["amount"] for r in clean))`,
         expectOutput: "extracted: 4 rows\nclean: [{'order_id': 101, 'city': 'CPH', 'amount': 250.5}, {'order_id': 103, 'city': 'ODE', 'amount': 131.75}]\nrejected: ['102']\ntotal: 382.25",
       },
-      { type: "callout", kind: "tip", title: "Idempotent = safe to run twice", html: "<p>If a re-run adds the same rows again, the totals double. Key the data by a stable id (like <code>order_id</code>) so a second run changes nothing (L10 p44, p50).</p>" },
-      { type: "callout", kind: "exam", title: "Exam link", html: "<p>Last year's exam had no data-engineering question; its tree question (Q6, DFS) is what Exercise 10 trains. Still, the ETL loop above is the same skill as exam Q3–Q5: loop over rows, check, keep or skip.</p>" },
+      { type: "h", text: "The slide's pandas version", sub: "L10 p47" },
+      {
+        type: "tryit",
+        title: "ETL in pandas",
+        task: "The slide reads <code>orders.csv</code>; here the CSV is a string so it runs in the browser. Run it. Then add a line that prints the rows that will be <b>dropped</b> because their amount is not a number.",
+        code: `
+          import io
+          import pandas as pd
+
+          csv_text = """order_id,city,amount
+          101,CPH,250.50
+          102,AAR,?
+          101,CPH,250.50
+          103,ODE,131.75"""
+
+          raw = pd.read_csv(io.StringIO(csv_text))                       # EXTRACT ('?' makes amount text)
+
+          clean = raw.drop_duplicates(subset="order_id").copy()          # TRANSFORM: one row per order
+          clean["amount"] = pd.to_numeric(clean["amount"], errors="coerce")   # '?' -> NaN
+          clean = clean.dropna(subset=["amount"])                        # drop rows with no amount
+
+          print(clean)
+          print("total:", clean["amount"].sum())
+          print(clean.to_csv(index=False))                               # LOAD (slide: to_csv("orders_clean.csv"))`,
+        hint: "Before <code>dropna</code>: <code>print(clean[clean[\"amount\"].isna()])</code>. Or on the raw data: <code>raw[pd.to_numeric(raw[\"amount\"], errors=\"coerce\").isna()]</code>.",
+        solutionNote: "Output: rows 101 (250.50) and 103 (131.75), total 382.25, then the CSV text. Order 102 vanished <b>without a word</b>: that is why L10 p47 says a real pipeline needs more checks, like counting and logging rejected rows.",
+      },
+      { type: "table", head: ["pandas line", "Loop version"], code: [0, 1], rows: [
+        ['raw.drop_duplicates(subset="order_id")', "if order_id in seen: continue"],
+        ['pd.to_numeric(..., errors="coerce")', "try: float(amount) except ValueError: ..."],
+        ['clean.dropna(subset=["amount"])', "rejected.append(order_id); continue"],
+      ] },
+
+      { type: "h", text: "ETL vs ELT", sub: "L10 p48" },
+      { type: "table", head: ["", "ETL", "ELT"], rows: [
+        ["Order", "Extract → <b>Transform</b> → Load", "Extract → Load → <b>Transform</b>"],
+        ["Where cleaning runs", "before the target, in your code", "inside the warehouse or lake, e.g. with SQL"],
+        ["Good when", "the target must only get clean data", "the warehouse has the compute; you want raw data kept"],
+        ["Tiny example", "Python cleans orders.csv, then writes it", "load raw orders, then <code>CREATE TABLE clean AS SELECT …</code>"],
+      ] },
+
+      { type: "h", text: "Orchestrate, test and monitor", sub: "L10 p49" },
+      { type: "table", head: ["Stage", "Check", "Tiny example"], rows: [
+        ["Extract", "dependency: is the source ready?", "today's file exists"],
+        ["Validate", "nulls, types, row counts", "1,000 rows expected, 0 arrived → stop"],
+        ["Transform", "metric logic and joins", "every product_id finds its product"],
+        ["Load", "write, verify, publish", "count rows in the target before publishing"],
+      ] },
+      `<p><b>Orchestration</b> = scheduling jobs, their order and their retries. <b>Observability</b> = logging status, volumes, freshness and failures.</p>`,
+      { type: "widget", title: "Four pipeline runs", intro: "Pick a run and read its log.", render: runWidget },
+
+      { type: "h", text: "A reliable pipeline has a contract", sub: "L10 p50" },
+      { type: "table", head: ["When", "What", "Tiny example"], rows: [
+        ["Before the run", "define keys, schema, units, freshness, access", "key = order_id; amount in DKK; ready by 07:00"],
+        ["During the run", "validate types and totals; quarantine bad rows; checkpoint", "'?' rows go to a rejected list"],
+        ["After the run", "reconcile counts and totals; publish only validated output; alert on failure", "in = clean + rejected + duplicates"],
+      ] },
+      {
+        type: "tryit",
+        title: "Reconcile the counts",
+        task: "Every row that comes in must end up somewhere. Run it: the check fails. Find the row that disappears and fix it so the counts add up.",
+        code: `
+          raw = [("101", "CPH", "250.50"), ("102", "AAR", "?"), ("101", "CPH", "250.50"),
+                 ("103", "ODE", "131.75"), ("104", "", "80.00"), ("105", "CPH", "40.00")]
+
+          seen = set()
+          clean = []
+          rejected = []
+          duplicates = 0
+
+          for order_id, city, amount in raw:
+              if order_id in seen:
+                  duplicates += 1
+                  continue
+              seen.add(order_id)
+
+              if city == "":                     # no city: skip it
+                  continue
+
+              try:
+                  clean.append((int(order_id), city, float(amount)))
+              except ValueError:
+                  rejected.append(order_id)
+
+          print("in:", len(raw), "clean:", len(clean), "rejected:", len(rejected), "duplicates:", duplicates)
+          assert len(raw) == len(clean) + len(rejected) + duplicates, "rows went missing!"
+          print("reconciled ✓")`,
+        expectOutput: "in: 6 clean: 3 rejected: 2 duplicates: 1\nreconciled ✓",
+        hint: "Order 104 has no city. It is skipped with <code>continue</code>, but not counted anywhere.",
+        solution: `
+          raw = [("101", "CPH", "250.50"), ("102", "AAR", "?"), ("101", "CPH", "250.50"),
+                 ("103", "ODE", "131.75"), ("104", "", "80.00"), ("105", "CPH", "40.00")]
+
+          seen = set()
+          clean = []
+          rejected = []
+          duplicates = 0
+
+          for order_id, city, amount in raw:
+              if order_id in seen:
+                  duplicates += 1
+                  continue
+              seen.add(order_id)
+
+              if city == "":                     # no city: reject it, and count it
+                  rejected.append(order_id)
+                  continue
+
+              try:
+                  clean.append((int(order_id), city, float(amount)))
+              except ValueError:
+                  rejected.append(order_id)
+
+          print("in:", len(raw), "clean:", len(clean), "rejected:", len(rejected), "duplicates:", duplicates)
+          assert len(raw) == len(clean) + len(rejected) + duplicates, "rows went missing!"
+          print("reconciled ✓")`,
+        solutionNote: "Before the fix: 6 in, but 3 + 1 + 1 = 5 accounted for → AssertionError. The code ran fine otherwise: “running without an exception does not prove the data is correct” (L10 p50).",
+      },
+      {
+        type: "tryit",
+        title: "Idempotent: safe to run twice",
+        task: "The load job runs twice (a retry after a crash). Run it and compare the totals. Then change the second run so order 103's amount is corrected to 130.0: what does the upsert table show?",
+        code: `
+          batch = [{"order_id": 101, "amount": 250.5}, {"order_id": 103, "amount": 131.75}]
+
+          table_list = []                                  # append: not idempotent
+          table_dict = {}                                  # upsert by key: idempotent
+
+          for run in [1, 2]:                               # the same job, twice
+              for row in batch:
+                  table_list.append(row)
+                  table_dict[row["order_id"]] = row       # insert, or overwrite if the key exists
+              total_list = sum(r["amount"] for r in table_list)
+              total_dict = sum(r["amount"] for r in table_dict.values())
+              print(f"after run {run}: append {len(table_list)} rows, total {total_list} | upsert {len(table_dict)} rows, total {total_dict}")`,
+        expectOutput: "after run 1: append 2 rows, total 382.25 | upsert 2 rows, total 382.25\nafter run 2: append 4 rows, total 764.5 | upsert 2 rows, total 382.25",
+        solutionNote: "Append doubles the revenue on a re-run. The upsert keeps 2 rows; with a corrected amount it simply overwrites 131.75 with 130.0 (total 380.5). That is the “upsert” of L10 p44.",
+      },
+      { type: "h", text: "Design a small pipeline", sub: "L10 p51: try it in the quiz below." },
+      { type: "table", head: ["Question", "For “daily sales CSV + product data from an API”"], rows: [
+        ["01 Lifecycle", "where are records made, archived, deleted?"],
+        ["02 Format", "which fields and types to validate?"],
+        ["03 Collection", "how to fetch only what is needed?"],
+        ["04 Storage", "where do raw and curated data live?"],
+        ["05 ETL", "how to join, test, load and monitor?"],
+      ] },
       { type: "mistakes", items: [
-        { title: "Doing maths on CSV text", wrong: "row = '101,CPH,250.50'.split(',')\nprint(row[2] * 2)    # '250.50250.50'", right: "print(float(row[2]) * 2)   # 501.0", why: "Every CSV field is text. Parse it first." },
-        { title: "Treating missing as zero", wrong: "amount = float(text or 0)   # '' becomes 0.0", right: "if text == '':\n    rejected.append(order_id)   # flag it", why: "Unknown is not 0. A zero would pull the average down (L10 p27)." },
-        { title: "Adding different units", wrong: "total = 250 + 250   # DKK + EUR", right: "total = 250 + 250 * eur_to_dkk", why: "250 DKK + 250 EUR is not 500 of anything (L10 p27)." },
-        { title: "Trusting a field name forever", wrong: "price = record['price']   # KeyError today", right: "price = record.get('price')\nif price is None:\n    price = float(record['unit_price'])", why: "APIs change (schema drift). Check the keys, test the contract (L10 p26)." },
         { title: "Re-running doubles the data", wrong: "table.append(row)            # run twice = 2 copies", right: "table[row['order_id']] = row  # run twice = same", why: "Use a stable key so a re-run is safe (idempotent)." },
+        { title: "“No error, so it worked”", wrong: "# the script finished -> publish", right: "assert len(raw) == len(clean) + len(rejected) + dups", why: "Reconcile counts and totals before publishing (L10 p50)." },
+        { title: "Dropping bad rows silently", wrong: "clean = clean.dropna()", right: "bad = clean[clean['amount'].isna()]\nprint(len(bad), 'rejected')\nclean = clean.dropna()", why: "Quarantine and count them; alert if there are too many." },
+        { title: "Cleaning in place of the raw data", wrong: "raw = transform(raw)", right: "clean = transform(raw)   # raw kept", why: "With the raw data kept, a fixed rule can be re-run (ELT, raw layer)." },
+        { title: "Publishing half a load", wrong: "write rows one by one into the live table", right: "write to a new table, verify, then swap it in", why: "Readers must never see a half-finished table (L10 p49–50)." },
       ] },
     ],
     quiz: [
-      { type: "mc", q: "A dashboard sums one column over 10 million rows every hour. Which format fits best?", options: ["CSV", "JSON", "Parquet", "XML"], answer: 2,
-        wrong: { 0: "CSV is row-by-row text: it must read every column of every row.", 1: "JSON is for flexible, nested records, e.g. API answers.", 3: "XML is wordy markup for exchange between systems." },
-        hint: "Which format stores data by column?", explain: "Parquet stores each column together and compressed, so summing one column reads only that column (L10 p21)." },
       { type: "mc", q: "Raw order files are loaded into the warehouse first and cleaned there later with SQL. What is this?", options: ["ETL", "ELT", "OLTP", "Streaming"], answer: 1,
         hint: "In which order do Load and Transform happen here?", explain: "Extract → Load → Transform is <b>ELT</b>. In ETL the cleaning happens <i>before</i> loading (L10 p48)." },
-      { type: "mc", q: "Which job is OLTP?", options: ["Insert one order when a customer pays", "Revenue per month for the last 5 years", "Train a demand forecast", "A weekly sales dashboard"], answer: 0,
-        hint: "OLTP = many small, safe writes for the running business.", explain: "Checkout writes one order: a short transaction. The other three read and summarise lots of data: OLAP or data science (L10 p30)." },
-      { type: "predict", q: "What does this print?", code: "row = '101,CPH,250.50'.split(',')\nprint(row[2] * 2)", answer: "250.50250.50",
-        hint: "What type is <code>row[2]</code>? What does <code>*</code> do to that type?", explain: "<code>split</code> gives text, so <code>row[2]</code> is <code>'250.50'</code>. Text times 2 repeats it. <code>float(row[2]) * 2</code> would give 501.0." },
+      { type: "mc", q: "<code>pd.to_numeric(pd.Series([\"250.50\", \"?\"]), errors=\"coerce\")</code> gives…", options: ["a ValueError", "<code>[250.5, NaN]</code>", "<code>[250.5, 0.0]</code>", "<code>[250.5]</code>"], answer: 1,
+        hint: "“coerce” = force: what does pandas put where it cannot make a number?", explain: "Anything that is not a number becomes NaN. Then <code>dropna</code> removes it (L10 p47)." },
+      { type: "predict", q: "What does this print?", code: `
+          table = {}
+          for run in range(3):
+              for oid, amt in [(1, 10), (2, 5)]:
+                  table[oid] = amt
+          print(len(table), sum(table.values()))`, answer: "2 15",
+        hint: "Three runs, but how many different keys?", explain: "Each run overwrites keys 1 and 2: 2 rows, total 15. With a list you would have 6 rows and 45." },
+      { type: "mc", q: "Yesterday's load wrote 0 rows, with no error. Which check would have caught it?", options: ["A row-count check / reconciliation", "A faster CPU", "Switching to JSON", "A bigger timeout"], answer: 0,
+        hint: "L10 p49: validate nulls, types, <b>row counts</b>.", explain: "Observability: compare the row count to what you expect and alert. No exception ≠ correct data (L10 p50)." },
       { type: "write", q: "Write <code>clean_amounts(values)</code>. It gets a list of texts and <b>returns</b> a list of floats. Skip any text that is not a number.",
         starter: `
           def clean_amounts(values):
@@ -738,10 +1953,10 @@
               return result                    # after the loop, not inside it`,
         hint: "A <code>for</code> loop over <code>values</code>. Inside: <code>try:</code> append <code>float(text)</code>, <code>except ValueError:</code> do nothing (<code>continue</code>). Return after the loop.",
         explain: "This is the Transform step in miniature: parse, and reject what cannot be parsed." },
-      { type: "explain", q: "In 2–3 sentences: what is the difference between batch and streaming, and when would you pick streaming?",
-        answer: "<p>Batch runs at set times (for example every night) and handles everything that came in since the last run; it is simpler and cheaper, but the data is less fresh. Streaming handles each event as it arrives, so results are fresh within seconds, but it is harder to run (state, failures, cost). Pick streaming when you must react fast, for example an alert when a freezer sensor gets too warm.</p>",
-        points: ["batch = at intervals, simpler, less fresh", "streaming = continuous, fresh, more complex", "pick by how fresh it must be, not by speed alone"],
-        hint: "L10 p14: think about freshness vs complexity." },
+      { type: "explain", q: "L10 p51: design a small pipeline that combines a <b>daily sales CSV</b> with <b>product data from an API</b>. Answer the five questions (lifecycle, format, collection, storage, ETL) in a few sentences.",
+        answer: "<p><b>Lifecycle:</b> sales are created at the tills each day and products in the product system; raw files are archived after a year and deleted after the retention period. <b>Format:</b> the CSV gives order_id, product_id, quantity and amount as text, so I validate that ids exist, quantity is a whole number and amount parses as a DKK number; the API gives JSON, where I check that product_id, name and category are present. <b>Collection:</b> import the CSV once a day; poll the API incrementally (only products updated since the last cursor), following pages, with timeouts and retries. <b>Storage:</b> keep the raw CSV and JSON in a raw area of a lake, and write the joined, curated revenue table to a warehouse, partitioned by date. <b>ETL:</b> parse and dedupe sales by order_id, join to products on product_id (rows with an unknown product go to quarantine), sum revenue per product and day, upsert by (date, product_id) so re-runs are safe, reconcile row counts and totals, and alert if a check fails.</p>",
+        points: ["validate fields and types; amounts parsed, unit DKK", "incremental API pulls with pagination, retries, cursor", "raw kept (lake), curated table (warehouse), partition by date", "join on product_id; quarantine unknowns", "idempotent upsert; reconcile counts; alert"],
+        hint: "Go through the five questions one by one; give one concrete choice for each." },
     ],
   };
 
@@ -2562,6 +3777,6 @@
       "<b>Q6</b>: a DFS that returns a list of visited nodes, iterative (stack) or recursive, plus a short explanation. Exercise 10 is direct practice.",
       "<b>Q2/Q4</b>: find and fix bugs: the BFS debugging part trains exactly this (runtime vs logical).",
     ],
-    topics: [lecture, bfs, bfsDebug, dfsRecursive, heightPaths, iterativeDfs, analyze, walkthrough],
+    topics: [lecture, lifecycle, formats, storage, apis, etl, bfs, bfsDebug, dfsRecursive, heightPaths, iterativeDfs, analyze, walkthrough],
   });
 })();

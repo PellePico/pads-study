@@ -1247,6 +1247,7 @@
         { title: "Thinking O(log n) is slow", wrong: "log n ≈ n", right: "log₂ of 1,000,000 ≈ 20", why: "A million items, about 20 halvings. Almost as good as O(1)." },
         { title: "Using time to measure memory", wrong: "\"It ran fast, so it uses little memory\"", right: "time and memory are separate questions", why: "Ex9 H3: timing says nothing about extra space (merge sort is fast but needs O(n) extra)." },
       ] },
+      { type: "callout", kind: "note", title: "Next", html: "<p>Best vs worst case, memory and recursion trees: <a href=\"#algorithms/big-o-cases\">Big-O: best/worst, space & recursion</a>. Every cost on one page plus a 17-snippet drill and the exam answer template: <a href=\"#algorithms/big-o-drill\">Big-O: cheat sheet & exam drill</a>.</p>" },
     ],
     quiz: [
       { type: "mc", q: "What is the Big-O of this function?", code: `
@@ -1280,6 +1281,606 @@
         answer: "<p>Bubble sort compares pairs in a loop inside a loop, so its work grows with n²: for 100,000 items that is about 10,000,000,000 steps. Merge sort halves the list about 17 times (log₂ 100,000 ≈ 17), and each level does about n steps of merging, so about 1,700,000 steps. Doubling n makes bubble sort about ×4 slower but merge sort only a bit more than ×2. The bigger the list, the bigger the gap.</p>",
         points: ["bubble = nested loops = n²", "merge = about log n levels × n work per level", "numbers: 10¹⁰ vs about 1.7 × 10⁶", "double n: ×4 vs a bit more than ×2"],
         hint: "Count the steps for n = 100,000 in each case." },
+    ],
+  };
+
+  /* ================================================================
+     TOPIC 11b-2: Big-O: best/worst case, space, recursion
+     ================================================================ */
+  // a tiny seeded shuffle so "random" gives the same list every time (and the numbers can be checked)
+  function seededPerm(n, seed) {
+    const a = Array.from({ length: n }, (_, i) => i + 1);
+    let s = seed;
+    for (let i = n - 1; i > 0; i--) { s = (s * 1103515245 + 12345) % 2147483648; const j = s % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  const CASE_INPUTS = {
+    search: [
+      ["target first", n => ({ list: Array.from({ length: n }, (_, i) => i + 1), target: 1 })],
+      ["target in the middle", n => ({ list: Array.from({ length: n }, (_, i) => i + 1), target: n / 2 })],
+      ["target last", n => ({ list: Array.from({ length: n }, (_, i) => i + 1), target: n })],
+      ["not there", n => ({ list: Array.from({ length: n }, (_, i) => i + 1), target: 0 })],
+    ],
+    sort: [
+      ["sorted", n => Array.from({ length: n }, (_, i) => i + 1)],
+      ["nearly sorted", n => { const a = Array.from({ length: n }, (_, i) => i + 1); [a[1], a[2]] = [a[2], a[1]]; [a[n - 3], a[n - 2]] = [a[n - 2], a[n - 3]]; return a; }],
+      ["random", n => seededPerm(n, 7)],
+      ["reversed", n => Array.from({ length: n }, (_, i) => n - i)],
+    ],
+  };
+  const CASE_ALGOS = [
+    { name: "Linear search", kind: "search",
+      code: `
+        def linear_search(nums, target):
+            count = 0
+            for i, x in enumerate(nums):
+                count += 1           # 1 comparison
+                if x == target:
+                    return i, count  # found: stop
+            return -1, count         # checked all n`,
+      count: ({ list, target }) => { const i = list.indexOf(target); return i < 0 ? list.length : i + 1; },
+      mark: ({ list, target }) => { const i = list.indexOf(target); const m = {}; list.forEach((_, k) => { if (i < 0 || k < i) m[k] = "cmp"; }); if (i >= 0) m[i] = "done"; return m; },
+      verdict: ["Best case: found at once. 1 comparison, whatever n is: <b>O(1)</b>.", "Average case: about n/2 comparisons. Drop the ½: <b>O(n)</b>.", "Worst case: n comparisons: <b>O(n)</b>.", "Worst case too: you only know it is missing after checking all n: <b>O(n)</b>."] },
+    { name: "Insertion sort", kind: "sort",
+      code: `
+        def insertion_sort(nums):
+            a = nums.copy()
+            count = 0
+            for i in range(1, len(a)):
+                key = a[i]
+                j = i - 1
+                while j >= 0:
+                    count += 1       # 1 comparison
+                    if a[j] > key:
+                        a[j + 1] = a[j]  # slide right
+                        j -= 1
+                    else:
+                        break        # spot found
+                a[j + 1] = key
+            return a, count`,
+      count: a0 => { const a = a0.slice(); let c = 0; for (let i = 1; i < a.length; i++) { const key = a[i]; let j = i - 1; while (j >= 0) { c++; if (a[j] > key) { a[j + 1] = a[j]; j--; } else break; } a[j + 1] = key; } return c; },
+      verdict: ["Best case: each card is already in place, 1 comparison each: n − 1 in total: <b>O(n)</b>.", "Nearly sorted: only a few cards slide. Still about n: <b>O(n)</b>. This is L9 p48, question 2.", "Average case: about n²/4. Drop the ¼: <b>O(n²)</b>.", "Worst case: card i slides past all i cards before it. 1 + 2 + … + (n − 1) = n(n − 1)/2: <b>O(n²)</b>."] },
+    { name: "Bubble sort", kind: "sort",
+      code: `
+        def bubble_sort(nums):
+            a = nums.copy()
+            count = 0
+            n = len(a)
+            for p in range(n - 1):
+                swapped = False
+                for j in range(n - 1 - p):
+                    count += 1       # 1 comparison
+                    if a[j] > a[j + 1]:
+                        a[j], a[j + 1] = a[j + 1], a[j]
+                        swapped = True
+                if not swapped:
+                    break            # early exit
+            return a, count`,
+      count: a0 => { const a = a0.slice(), n = a.length; let c = 0; for (let p = 0; p < n - 1; p++) { let sw = false; for (let j = 0; j < n - 1 - p; j++) { c++; if (a[j] > a[j + 1]) { [a[j], a[j + 1]] = [a[j + 1], a[j]]; sw = true; } } if (!sw) break; } return c; },
+      verdict: ["Best case: one pass with no swap, then <code>break</code>: n − 1 comparisons: <b>O(n)</b>.", "Nearly sorted: two passes here, about 2n: <b>O(n)</b>.", "Average case: <b>O(n²)</b>.", "Worst case: every pass runs to the end. n(n − 1)/2: <b>O(n²)</b>."] },
+  ];
+  function casesWidget(el) {
+    let ai = 1, ii = 0;
+    const codeBox = h("div"), pic = h("div", { class: "alg-scroll" }), body = h("div"), verdict = h("p", { class: "alg-now", "aria-live": "polite" });
+    const inputRow = h("div");
+    const algoSeg = seg(CASE_ALGOS.map(a => a.name), i => { ai = i; ii = 0; buildInputs(); draw(); }, ai, "Algorithm");
+    function buildInputs() {
+      const ins = CASE_INPUTS[CASE_ALGOS[ai].kind];
+      inputRow.replaceChildren(seg(ins.map(x => x[0]), i => { ii = i; draw(); }, ii, "Input").el);
+    }
+    function draw() {
+      const A = CASE_ALGOS[ai], mk = CASE_INPUTS[A.kind][ii][1];
+      codeBox.replaceChildren(ui.code({ code: A.code, nonum: true }));
+      const small = mk(8);
+      if (A.kind === "search") pic.replaceChildren(D.array(small.list, { name: "nums (target " + small.target + ")", marks: A.mark(small) }));
+      else pic.replaceChildren(D.array(small, { name: "nums" }));
+      let prev = null;
+      body.replaceChildren(ui.table({ head: ["n", "comparisons", "double n →"], num: [0, 1], rows: [8, 16, 32, 64].map(n => {
+        const c = A.count(mk(n)), r = prev ? "×" + (c / prev).toFixed(1) : "";
+        prev = c; return [String(n), c.toLocaleString("en-US"), r];
+      }) }));
+      verdict.innerHTML = A.verdict[ii];
+    }
+    buildInputs();
+    el.append(row(algoSeg.el), h("div", { style: "margin-top:6px" }, inputRow), h("div", { style: "margin-top:10px" }, pic),
+      h("div", { class: "alg-two" }, codeBox, h("div", null, body, verdict)),
+      h("p", { class: "small muted", style: "margin:6px 0 0" }, "×1.0 = O(1), ×2 = O(n), ×4 = O(n²). The list above is the n = 8 version."));
+    draw();
+  }
+
+  // deepest call stack for a few recursive functions
+  const STACKS = [
+    { name: "countdown(n)", depth: n => n, frame: (n, k) => `countdown(${n - k})`, o: "O(n)", why: "Each call waits for the next one, one smaller. n calls are open at the same time." },
+    { name: "binary search", depth: n => Math.floor(Math.log2(n)) + 1, frame: (n, k) => `search(${Math.max(1, n >> k)} items)`, o: "O(log n)", why: "Each call throws half away, so only about log₂ n calls are ever open." },
+    { name: "DFS, balanced tree", depth: n => Math.floor(Math.log2(n)) + 1, frame: (n, k) => `dfs(level ${k})`, o: "O(h) = O(log n)", why: "The stack holds one path from the root down: h levels. A balanced tree has h ≈ log₂ n." },
+    { name: "DFS, chain tree", depth: n => n, frame: (n, k) => `dfs(node ${k + 1})`, o: "O(h) = O(n)", why: "A chain (every node has one child) is n levels tall. With 2,000 nodes Python stops with RecursionError (limit about 1,000). Exercise 10's iterative DFS avoids this." },
+  ];
+  function stackWidget(el) {
+    let fi = 0, n = 8;
+    const pic = h("div"), txt = h("p", { class: "alg-now", "aria-live": "polite" });
+    const fSeg = seg(STACKS.map(s => s.name), i => { fi = i; draw(); }, 0, "Function");
+    const nSeg = seg(["n = 8", "n = 16", "n = 32"], i => { n = [8, 16, 32][i]; draw(); }, 0, "Input size");
+    function draw() {
+      const F = STACKS[fi], d = F.depth(n);
+      const ks = d <= 7 ? [...Array(d).keys()] : [0, 1, 2, -1, d - 3, d - 2, d - 1];   // bottom → top, -1 = gap
+      const plates = ks.map(k => k < 0 ? h("div", { class: "alg-plate", style: "background:var(--surface-2);color:var(--muted)" }, `⋮ ${d - 6} more`)
+        : h("div", { class: "alg-plate" + (k === d - 1 ? " top" : "") }, F.frame(n, k)));
+      pic.replaceChildren(h("div", { class: "alg-stack" }, ...plates));
+      txt.innerHTML = `Deepest point: <b>${d} frames</b> for n = ${n}. Extra memory: <b>${F.o}</b>. ${F.why}`;
+    }
+    el.append(row(fSeg.el), h("div", { style: "margin-top:6px" }, nSeg.el), h("div", { class: "alg-two" }, h("div", null, eyebrow("Call stack at its deepest (newest on top)"), pic), txt));
+    draw();
+  }
+
+  // merge sort as a tree of levels: level k has 2^k pieces of n / 2^k items
+  function mergeTreeWidget(el) {
+    let n = 8;
+    const pic = h("div", { class: "alg-scroll" }), txt = h("p", { class: "alg-now", "aria-live": "polite" });
+    const nSeg = seg(["n = 4", "n = 8", "n = 16"], i => { n = [4, 8, 16][i]; draw(); }, 1, "List size");
+    function draw() {
+      const L = Math.log2(n), W = 600, top = 10, rowH = 46, cell = Math.min(28, (W - 150 - (n - 1) * 6) / n);
+      const S = D.svg({ w: W, h: top + (L + 1) * rowH + 6, label: `merge sort tree for ${n} items: ${L + 1} levels` });
+      for (let k = 0; k <= L; k++) {
+        const pieces = 2 ** k, size = n / pieces, y = top + k * rowH;
+        const gap = 6, total = n * cell + (pieces - 1) * gap, x0 = (W - 150 - total) / 2;
+        for (let p = 0; p < pieces; p++) S.box(x0 + p * (size * cell + gap), y, size * cell, 28, { text: String(size), tone: k === L ? "done" : "tile", rx: 5, size: 12 });
+        S.text(W - 140, y + 14, `level ${k}: ${pieces} × ${size}`, { anchor: "start", small: true, muted: true });
+        S.text(W - 140, y + 30, k < L ? `merge work ≈ ${n}` : "size 1: base case", { anchor: "start", small: true, ui: true, cls: k < L ? "alg-ptr" : null });
+      }
+      pic.replaceChildren(S.el);
+      txt.innerHTML = `${n} items → halve ${L} times to reach size 1 (log₂ ${n} = ${L}). Every merging level touches all ${n} items once. Work ≈ <b>${L} levels × ${n} = ${L * n}</b> = n log₂ n. Double n to ${2 * n}: ${L + 1} × ${2 * n} = ${(L + 1) * 2 * n}, that is ×${(((L + 1) * 2 * n) / (L * n)).toFixed(2)}: a bit more than ×2.`;
+    }
+    el.append(row(nSeg.el), h("div", { style: "margin-top:10px" }, pic), txt);
+    draw();
+  }
+
+  const bigOCases = {
+    id: "big-o-cases",
+    title: "Big-O: best/worst, space & recursion",
+    summary: "One algorithm can be quick on one list and slow on another. Memory grows too. And recursion has its own counting rule: <b>levels × work per level</b>.",
+    sources: "L7 p23, p33, p36–38; L9 p4, p48; Ex7; Ex9 E4, M4, H3–H4",
+    blocks: [
+      { type: "callout", kind: "note", title: "Start with the basics", html: "<p>Double n → ×2 or ×4, the three rules and reading loops: <a href=\"#algorithms/big-o\">Big-O</a>. The curves: <a href=\"#sortviz/bigo\">Sorting visualizer → Big-O</a>. All costs on one page and a drill: <a href=\"#algorithms/big-o-drill\">Big-O cheat sheet & drill</a>.</p>" },
+
+      { type: "h", text: "Best, average and worst case", sub: "L7 p33: Big-O normally means the worst case." },
+      { type: "table", head: ["Algorithm", "Best case", "Worst case", "Tiny example (n = 8)"], rows: [
+        ["Linear search", "O(1): target first", "O(n): last or missing", "1 check vs 8 checks"],
+        ["Binary search (sorted list)", "O(1): target in the middle", "O(log n)", "1 check vs 4 checks (8 → 4 → 2 → 1)"],
+        ["Bubble (early exit), insertion", "O(n): already sorted", "O(n²): reversed", "7 vs 28 comparisons"],
+        ["Selection", "O(n²)", "O(n²)", "always 28: it scans the rest every time"],
+        ["Merge", "O(n log n)", "O(n log n)", "always about 3 levels × 8 = 24"],
+        ["Quick", "O(n log n): pivots split in half", "O(n²): pivot is always the smallest or biggest", "3 levels × 8 vs 8 levels × up to 8"],
+      ] },
+      { type: "widget", title: "Same algorithm, different input", intro: "Pick an algorithm and an input. The table counts real comparisons for n = 8, 16, 32 and 64.", render: casesWidget },
+      { type: "callout", kind: "tip", title: "Say which case you mean", html: "<p>“Insertion sort is O(n²)” means the worst case. If you mean another case, say it: “insertion sort is O(n) in the <b>best</b> case, when the list is already sorted”. That is the answer to L9 p48 question 2 (a nearly sorted list → insertion sort).</p>" },
+
+      { type: "h", text: "Space: how much extra memory?", sub: "L7 p23: analyse time and space. Ex9 M4 asks for “auxiliary space”: memory on top of the input." },
+      { type: "table", head: ["Code", "Extra memory", "Why (n = 8)"], code: [0], rows: [
+        ["total = 0\nfor x in nums: total += x", "O(1)", "one number, also when n = 1,000,000"],
+        ["doubled = [x * 2 for x in nums]", "O(n)", "a new list of 8 items"],
+        ["seen = set()  # filled in a loop", "O(n)", "up to 8 items"],
+        ["bubble / selection / insertion in place", "O(1)", "only i, j and key"],
+        ["merge sort", "O(n)", "the halves and the merged lists"],
+        ["F = [0] * (n + 1)  # fib table", "O(n)", "9 boxes (L7 p37)"],
+        ["def countdown(n): ... countdown(n - 1)", "O(n)", "8 frames wait on the call stack"],
+      ] },
+      { type: "widget", title: "Recursion costs memory too", intro: "Every open call is a frame on the call stack. Pick a function and n: this is the stack at its deepest point.", render: stackWidget },
+      { type: "callout", kind: "warn", title: "Time and memory are separate questions", html: "<p>Ex9 H3: a stopwatch measures time only. Merge sort is fast <b>and</b> needs O(n) extra memory. Naive Fibonacci is slow (O(2ⁿ) time) but its stack is only n deep (O(n) space, L7 p37).</p>" },
+
+      { type: "h", text: "Recursion: levels × work per level", sub: "Your notes: merge/quick recursion was the hard part. This is the one rule you need." },
+      { type: "callout", kind: "rule", title: "Draw the call tree, then multiply", html: "<ol><li>How many <b>levels</b> does the tree have?</li><li>How much <b>work on one level</b> (all calls on that level together)?</li><li>Multiply. Merge sort, n = 8: 3 levels × 8 = <b>24 = n log₂ n</b>.</li></ol>" },
+      { type: "widget", title: "Merge sort: the tree of halves", intro: "Each row is one level of calls. The numbers are the piece sizes.", render: mergeTreeWidget },
+      { type: "table", caption: "Read the Big-O off the call tree", head: ["Function", "Levels", "Work per level", "Total"], rows: [
+        ["<code>factorial(n)</code>: one call per level", "n", "O(1)", "<b>O(n)</b>"],
+        ["binary search (recursive)", "log n", "O(1)", "<b>O(log n)</b>"],
+        ["merge sort", "log n", "n (merging)", "<b>O(n log n)</b>"],
+        ["quick sort, good pivot", "log n", "n (splitting into less / equal / greater)", "<b>O(n log n)</b>"],
+        ["quick sort, bad pivot (e.g. [1, 2, 3, 4, 5] and the first item)", "n", "up to n", "<b>O(n²)</b>"],
+        ["naive <code>fib(n)</code>: two calls each", "n", "doubles each level: 1, 2, 4, 8 …", "<b>O(2ⁿ)</b> (L7 p37)"],
+        ["<code>fib(n)</code> with memo or a table", "n", "each value once", "<b>O(n)</b> (L7 p37–38)"],
+        ["Tower of Hanoi", "n", "doubles each level", "<b>O(2ⁿ)</b>: 2ⁿ − 1 moves"],
+        ["<code>sum_list(nums[1:])</code>", "n", "the slice copies up to n items", "<b>O(n²)</b>: a hidden cost"],
+      ] },
+      { type: "callout", kind: "note", title: "See it move", html: "<p>The Fibonacci call tree with a memo switch: <a href=\"#algorithms/recursion\">Recursion</a>. Merge and quick sort with their call stack, line by line: <a href=\"#sortviz/merge\">merge sort</a> · <a href=\"#sortviz/quick\">quick sort</a>.</p>" },
+      { type: "table", caption: "How many calls? (counted in Python)", head: ["n", "naive fib calls", "memo fib calls"], num: [0, 1, 2], rows: [
+        ["5", "15", "9"], ["10", "177", "19"], ["15", "1,973", "29"], ["20", "21,891", "39"], ["25", "242,785", "49"],
+      ] },
+      `<p>Naive: +5 to n gives about ×11 the calls, which explodes. Memo: +5 to n gives +10 calls, a straight line: O(n). (The real naive factor is about ×1.6 per +1. The slides write O(2ⁿ), an upper bound: still exponential.)</p>`,
+      {
+        type: "tryit",
+        title: "Count the calls yourself",
+        task: "Run it. Then add 30 to the list of sizes (naive needs a few seconds for that one).",
+        code: `
+          calls = 0                              # how many times fib was called
+
+          def fib(n):
+              global calls
+              calls += 1
+              if n <= 1:
+                  return n
+              return fib(n - 1) + fib(n - 2)    # two calls: the tree doubles
+
+          memo_calls = 0
+
+          def fib_memo(n, memo):
+              global memo_calls
+              memo_calls += 1
+              if n in memo:                      # already known: no new work
+                  return memo[n]
+              if n <= 1:
+                  result = n
+              else:
+                  result = fib_memo(n - 1, memo) + fib_memo(n - 2, memo)
+              memo[n] = result                   # save it for next time
+              return result
+
+          for n in [5, 10, 15, 20]:
+              calls = 0
+              memo_calls = 0
+              fib(n)
+              fib_memo(n, {})
+              print(n, calls, memo_calls)`,
+        expectOutput: "5 15 9\n10 177 19\n15 1973 29\n20 21891 39",
+      },
+      { type: "mistakes", items: [
+        { title: "Quoting the best case as the Big-O", wrong: "Linear search is O(1): sometimes it finds it at once.", right: "Linear search is O(n) (worst case);\nO(1) only in the best case.", why: "Without a word added, Big-O means the worst case (L7 p33)." },
+        { title: "Thinking recursion needs no memory", wrong: "factorial(n), recursive: O(1) space", right: "O(n) space: n frames on the call stack", why: "Every call waits until the one below it returns (L7 p36)." },
+        { title: "Counting calls, not work", wrong: "merge sort makes about 2n calls → O(n)", right: "log n levels × n work per level → O(n log n)", why: "The merging inside the calls is where the work is." },
+        { title: "Slicing looks free", wrong: "return nums[0] + sum_list(nums[1:])   # O(n)", right: "# O(n²): each nums[1:] copies the rest\n# O(n) with an index: sum_list(nums, i + 1)", why: "A slice builds a new list: n − 1, then n − 2, … items." },
+        { title: "2ⁿ calls means 2ⁿ memory", wrong: "naive fib: O(2ⁿ) space", right: "naive fib: O(2ⁿ) time, O(n) space", why: "Only one path of the call tree is on the stack at a time (L7 p37)." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "Insertion sort gets a list of 1,000 items that is <b>already sorted</b>. Which Big-O describes this run?", options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 1,
+        wrong: { 0: "It still has to look at each item once to see it is in place.", 2: "No halving happens in insertion sort.", 3: "That is the worst case (reversed). Here nothing slides." },
+        hint: "How many comparisons does each card need if it is already in place?", explain: "One comparison per card: 999 in total. That is the best case, O(n). This is why L9 p48 picks insertion sort for an almost sorted list." },
+      { type: "mc", q: "What is the extra memory of this function?", code: `
+          def squares(nums):
+              return [x * x for x in nums]`, options: ["O(1)", "O(log n)", "O(n)", "O(n²)"], answer: 2,
+        wrong: { 0: "The comprehension builds a whole new list.", 3: "One new item per input item, not per pair." },
+        hint: "How long is the list it gives back?", explain: "A new list with n items: O(n) extra memory." },
+      { type: "mc", q: "Recursive binary search on a sorted list of 1,024 items. About how many calls are open at the deepest point?", options: ["about 10", "512", "1,024", "2"], answer: 0,
+        wrong: { 1: "That would be halving only once.", 2: "That is linear: one call per item." },
+        hint: "1024 → 512 → … → 1: how many halvings?", explain: "log₂ 1024 = 10 halvings, so about 10–11 frames. O(log n) space for the recursive version; the loop version needs O(1)." },
+      { type: "mc", q: "Merge sort on 16 items. How many levels merge, and about how much work is that?", options: ["4 levels, about 64 steps", "16 levels, about 256 steps", "2 levels, about 32 steps", "4 levels, about 16 steps"], answer: 0,
+        wrong: { 1: "That is n × n: the O(n²) sorts.", 3: "Each level touches all 16 items, not one per level." },
+        hint: "16 → 8 → 4 → 2 → 1: count the halvings. Each level touches every item once.", explain: "log₂ 16 = 4 levels × 16 items = 64 = n log₂ n." },
+      { type: "predict", q: "How many times is <code>fib</code> called? Type the number.", code: `
+          calls = 0
+          def fib(n):
+              global calls
+              calls += 1
+              if n <= 1:
+                  return n
+              return fib(n - 1) + fib(n - 2)
+
+          fib(4)
+          print(calls)`, answer: "9",
+        hint: "fib(4) calls fib(3) and fib(2). fib(3) makes 5 calls, fib(2) makes 3.", explain: "1 (for fib(4)) + 5 + 3 = 9. fib(2) is worked out twice: the repeated work that DP removes." },
+      { type: "explain", q: "Ex9 H4 style. In 3–4 sentences: compare merge sort and quick sort on time (best and worst) and on memory.",
+        answer: "<p>Merge sort always halves the list, so it has log n levels with n work each: O(n log n) in every case. It needs O(n) extra memory for the halves and the merged list. Quick sort is O(n log n) on average when the pivots split the list in about half, but if the pivot is always the smallest or biggest item, each level only removes one item: n levels × n work = O(n²). The list version from Ex9 also builds new less/equal/greater lists, so it uses O(n) extra memory on average.</p>",
+        points: ["merge: O(n log n) always, guaranteed", "merge: O(n) extra memory", "quick: O(n log n) average, O(n²) with bad pivots", "reason: levels × work per level", "quick list version: extra memory for less/equal/greater"],
+        hint: "Use “levels × work per level” for both. Then say what each one stores." },
+    ],
+  };
+
+  /* ================================================================
+     TOPIC 11b-3: Big-O cheat sheet and drill
+     ================================================================ */
+  const DRILL = [
+    { code: `
+        count = 0
+        for i in range(n):
+            for j in range(i):               # 0, 1, 2, … n − 1 rounds
+                count += 1`, options: ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"], answer: 2,
+      wrong: { 0: "There is a loop inside a loop. The inner one is shorter, but it still grows with n.", 1: "Nothing halves here. The inner loop grows by one each round." },
+      hint: "n = 4: the inner loop runs 0 + 1 + 2 + 3 times.", explain: "0 + 1 + … + (n − 1) = n(n − 1)/2. Drop the ½ and the lower term: O(n²). n = 4 gives 6." },
+    { code: `
+        for i in range(n):
+            for j in range(5):               # always 5 rounds
+                print(i, j)`, options: ["O(1)", "O(n)", "O(n²)", "O(5n²)"], answer: 1,
+      wrong: { 2: "The inner loop does not grow with n. It is always 5.", 3: "Never keep constants, and the inner loop is not n long." },
+      hint: "Does the inner loop get longer when n doubles?", explain: "5 × n steps. Drop the 5: O(n)." },
+    { code: `
+        i = 1
+        while i < n:
+            i = i * 2                        # 1, 2, 4, 8, …`, options: ["O(1)", "O(log n)", "O(n)", "O(2ⁿ)"], answer: 1,
+      wrong: { 2: "i does not go up by 1. It doubles.", 3: "i grows like 2ᵏ, so the number of rounds k is small: log n." },
+      hint: "n = 1,024: how many doublings to get from 1 to 1,024?", explain: "10 doublings for 1,024. Doubling (or halving) each round: O(log n)." },
+    { code: `
+        for i in range(n):                   # n rounds …
+            j = n
+            while j > 1:                     # … of halving
+                j = j // 2`, options: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"], answer: 2,
+      wrong: { 0: "The halving loop runs again in every one of the n rounds.", 3: "The inner loop halves: it is log n long, not n." },
+      hint: "Outer: n rounds. Inner: how many halvings of n?", explain: "n rounds × log n halvings = O(n log n). Same shape as merge sort." },
+    { code: `
+        for x in a:                          # a and b: both n long
+            if x in b:                       # b is a list
+                print(x)`, options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 3,
+      wrong: { 1: "<code>x in b</code> looks like one step, but on a list it walks through b." },
+      hint: "What does <code>in</code> do on a list?", explain: "<code>in</code> on a list scans it: up to n checks, done n times. O(n²)." },
+    { code: `
+        b_set = set(b)                       # n steps, once
+        for x in a:
+            if x in b_set:                   # hash lookup
+                print(x)`, options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 1,
+      wrong: { 3: "<code>in</code> on a <b>set</b> is O(1) on average: no scan.", 2: "Building a set does not sort anything." },
+      hint: "Cost of <code>set(b)</code> + n lookups of O(1) each.", explain: "n to build the set + n × O(1) lookups = 2n: O(n). The same task as the last one, made fast." },
+    { code: `
+        queue = list(range(n))
+        while queue:
+            item = queue.pop(0)              # take the front
+            print(item)`, options: ["O(n)", "O(n log n)", "O(n²)", "O(1)"], answer: 2,
+      wrong: { 0: "Each <code>pop(0)</code> shifts all the other items one to the left." },
+      hint: "What does <code>pop(0)</code> cost on a list of k items?", explain: "n pops, each shifting up to n items: O(n²). With <code>deque</code> and <code>popleft()</code> it is O(n)." },
+    { code: `
+        for i in range(n):
+            ranked = sorted(nums)            # nums has n items
+            print(ranked[0])`, options: ["O(n)", "O(n log n)", "O(n² log n)", "O(n²)"], answer: 2,
+      wrong: { 1: "That is one sort. Here it sorts again in every round.", 3: "<code>sorted()</code> is O(n log n), not O(n)." },
+      hint: "n rounds × the cost of one <code>sorted()</code>.", explain: "n × O(n log n) = O(n² log n). Fix: sort once before the loop (O(n log n)), or use <code>min(nums)</code> (O(n))." },
+    { code: `
+        out = []
+        for x in nums:
+            out = out + [x]                  # builds a NEW list`, options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 3,
+      wrong: { 1: "<code>out + [x]</code> copies the whole list each time. <code>out.append(x)</code> would be O(n)." },
+      hint: "How many items are copied in round 1, 2, 3 …?", explain: "Copies 1, 2, 3, … n items: n(n + 1)/2 = O(n²). <code>out.append(x)</code> adds in place: O(n) in total." },
+    { code: `
+        for x in nums:
+            print(x / sum(nums))             # share of the total`, options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 3,
+      wrong: { 1: "<code>sum(nums)</code> is a loop too, and it runs in every round." },
+      hint: "What does <code>sum(nums)</code> cost, and how often does it run?", explain: "n rounds × an O(n) sum = O(n²). Fix: <code>total = sum(nums)</code> once, before the loop: O(n)." },
+    { code: `
+        for x in a:                          # a has n items
+            print(x)
+        for y in b:                          # b has m items
+            print(y)`, options: ["O(n)", "O(n + m)", "O(n × m)", "O(n²)"], answer: 1,
+      wrong: { 0: "b has its own size m. Keep both if they can differ.", 2: "The loops are one <b>after</b> the other, not one inside the other.", 3: "Not nested, and the sizes differ." },
+      hint: "One after the other adds; one inside the other multiplies.", explain: "n + m. If both are n long, that is 2n = O(n)." },
+    { code: `
+        def total(nums):
+            if not nums:
+                return 0
+            return nums[0] + total(nums[1:])`, options: ["O(log n)", "O(n)", "O(n²)", "O(2ⁿ)"], answer: 2,
+      wrong: { 1: "n calls, yes. But each <code>nums[1:]</code> copies the rest of the list.", 3: "Only one recursive call per call: the tree does not branch." },
+      hint: "Levels × work per level. What does the slice cost?", explain: "n levels × a slice of up to n items = O(n²)." },
+    { code: `
+        def search(nums, target, lo, hi):    # nums is sorted
+            if lo > hi:
+                return -1
+            mid = (lo + hi) // 2
+            if nums[mid] == target:
+                return mid
+            if nums[mid] < target:
+                return search(nums, target, mid + 1, hi)
+            return search(nums, target, lo, mid - 1)`, options: ["O(1)", "O(log n)", "O(n)", "O(n log n)"], answer: 1,
+      wrong: { 2: "Each call keeps only half the range. And no slicing: it passes lo and hi.", 3: "Only one of the two calls runs each time." },
+      hint: "How much of the range is left after each call?", explain: "Half is thrown away per call: log n levels × O(1) work = O(log n). Passing lo/hi instead of slicing keeps each call O(1)." },
+    { code: `
+        def fib(n):
+            if n <= 1:
+                return n
+            return fib(n - 1) + fib(n - 2)`, options: ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"], answer: 3,
+      wrong: { 0: "That is the memo or table version. This one repeats work.", 2: "The call tree doubles on each level; it is much worse than n²." },
+      hint: "Two calls per call, about n levels.", explain: "The call tree roughly doubles each level: O(2ⁿ) (L7 p37). With a memo: O(n)." },
+    { code: `
+        # Exam w25 Q3
+        def process_inventory(stock, item_index, min_stock, low_stock_queue):
+            if stock[item_index] > 0:
+                stock[item_index] -= 1
+                return True
+            else:
+                low_stock_queue.append(item_index)
+                return False`, options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 0,
+      wrong: { 1: "<code>stock</code> has n items, but the function only touches one index. No loop." },
+      hint: "Is there a loop? What do indexing and <code>append</code> cost?", explain: "One index read, one write or one append: all O(1). It does not depend on how many items there are." },
+    { code: `
+        # Exam w25 Q5: m machines (rows), d days (columns)
+        def high_demand_machines(usage_matrix, usage_threshold):
+            totals = np.sum(usage_matrix, axis=1)
+            is_high = totals > usage_threshold
+            return np.where(is_high)[0]`, options: ["O(1)", "O(m)", "O(m × d)", "O(m²)"], answer: 2,
+      wrong: { 0: "Short code is not O(1). NumPy still visits every cell, just very fast.", 1: "Each row total adds d numbers. Only the last two lines are O(m)." },
+      hint: "How many cells does <code>np.sum(…, axis=1)</code> add up?", explain: "The sum touches all m × d cells. The compare and <code>np.where</code> are O(m). Total O(m × d): linear in the size of the matrix." },
+    { code: `
+        # Exam w25 Q6: adj_matrix is n × n, a tree with n machines
+        def dfs_route(adj_matrix, start):
+            n = len(adj_matrix)
+            visited = []
+            stack = [start]
+            while stack:
+                node = stack.pop()
+                visited.append(node)
+                for nb in range(n - 1, -1, -1):
+                    if adj_matrix[node][nb] == 1 and nb not in visited:
+                        stack.append(nb)
+            return visited`, options: ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"], answer: 2,
+      wrong: { 0: "A tree has only n − 1 edges, but the code still reads a full row of n for each machine.", 3: "Each machine is popped once; nothing branches exponentially." },
+      hint: "How many machines are popped? How long is each row scan?", explain: "n machines × a row of n = O(n²). <code>nb not in visited</code> is O(n) on a list, but <code>and</code> only runs it for real neighbours (2(n − 1) times in a tree), so that adds another O(n²) at most. With an adjacency list it would be O(n + edges)." },
+  ];
+  function drillWidget(el, api) {
+    const KEY = "alg:bigo-drill";
+    let done = api.store.get(KEY, {}) || {}, k = 0;
+    const nav = h("div", { class: "row-wrap", role: "group", "aria-label": "Snippet" });
+    const codeBox = h("div"), opts = h("div", { class: "row-wrap", style: "margin-top:10px" });
+    const fb = h("p", { class: "alg-now", "aria-live": "polite" }), score = h("p", { class: "small muted", style: "margin:6px 0 0" });
+    const navBtns = DRILL.map((_, i) => btn(String(i + 1), () => show(i), "btn small"));
+    nav.append(...navBtns);
+    const hintBtn = btn("Hint", () => { fb.innerHTML = "<b>Hint:</b> " + DRILL[k].hint; });
+    const nextBtn = btn("Next ▶", () => show((k + 1) % DRILL.length));
+    function paint() {
+      navBtns.forEach((b, i) => { b.setAttribute("aria-pressed", String(i === k)); b.textContent = String(i + 1) + (done[i] ? " ✓" : ""); });
+      const first = Object.values(done).filter(v => v === "first").length, any = Object.keys(done).length;
+      score.textContent = `${any} / ${DRILL.length} solved, ${first} right on the first try.`;
+    }
+    function show(i) {
+      k = i; let tries = 0;
+      const d = DRILL[i];
+      codeBox.replaceChildren(ui.code({ code: d.code, nonum: true }));
+      fb.innerHTML = `Snippet ${i + 1} of ${DRILL.length}. What is the Big-O (time)? Assume n = len(nums) unless the code says otherwise.`;
+      opts.replaceChildren(...d.options.map((o, j) => {
+        const b = btn(o, () => {
+          tries++;
+          if (j === d.answer) {
+            b.classList.add("mk-ok"); fb.innerHTML = "<b>Right ✓</b> " + d.explain;
+            if (!done[i]) { done[i] = tries === 1 ? "first" : "later"; api.store.set(KEY, done); }
+            opts.querySelectorAll("button").forEach(x => (x.disabled = true));
+            paint();
+          } else {
+            b.classList.add("mk-bad"); b.disabled = true;
+            fb.innerHTML = "<b>Not " + o + " ✗</b> " + ((d.wrong || {})[j] || "Count again: how many rounds, and what does each round cost?");
+          }
+        }, "btn");
+        return b;
+      }));
+      paint();
+    }
+    const reset = btn("Reset score", () => { done = {}; api.store.set(KEY, done); show(0); }, "btn small ghost");
+    el.append(nav, h("div", { style: "margin-top:10px" }, codeBox), opts, fb, row(hintBtn, nextBtn, reset), score);
+    show(0);
+  }
+
+  const bigODrill = {
+    id: "big-o-drill",
+    title: "Big-O: cheat sheet & exam drill",
+    summary: "Every cost on this site in one place, then 17 snippets to practise on, then how to write the answer in the exam.",
+    sources: "L7 p23, p32–39; L9 p4, p48; Ex7; Ex9 M4; Exam w25 Q3, Q5, Q6",
+    exam: ["Q3", "Q5", "Q6 analyse"],
+    blocks: [
+      { type: "callout", kind: "note", title: "First time here?", html: "<p>Start with <a href=\"#algorithms/big-o\">Big-O</a> (double n → ×2, ×4) and <a href=\"#algorithms/big-o-cases\">best/worst, space & recursion</a>.</p>" },
+
+      { type: "h", text: "Cost cheat sheet", sub: "Time unless it says otherwise. “avg” = on average." },
+      { type: "switch", label: "Cheat sheet part", items: [
+        { label: "Python built-ins", blocks: [{ type: "table", head: ["Operation", "Big-O", "Tiny example"], code: [0], rows: [
+          ["nums[i]   nums[i] = x", "O(1)", "nums[3] jumps straight to box 3"],
+          ["len(nums)", "O(1)", "Python stores the length"],
+          ["nums.append(x)   nums.pop()", "O(1)", "work at the end: nobody moves"],
+          ["nums.pop(0)   nums.insert(0, x)", "O(n)", "8 items: the other 7 shift"],
+          ["x in nums   nums.index(x)   nums.count(x)", "O(n)", "scans up to all 8"],
+          ["nums[a:b]   nums.copy()   out + [x]", "O(k) / O(n)", "copies every item it keeps"],
+          ["min(nums)   max(nums)   sum(nums)", "O(n)", "looks at every item once"],
+          ["sorted(nums)   nums.sort()", "O(n log n)", "Python's own sort"],
+          ["d[key]   d[key] = v   key in d", "O(1) avg", "hash: jumps to the right box"],
+          ["x in s   s.add(x)", "O(1) avg", "same idea as a dict"],
+          ["dq.append(x)   dq.popleft()", "O(1)", "a deque is open at both ends"],
+          ["np.sum(arr)   arr > t   np.where(mask)", "O(n)", "n = number of cells; fast, but not O(1)"],
+        ] }] },
+        { label: "Data structures", blocks: [{ type: "table", head: ["Structure", "Operation", "Big-O", "Why"], rows: [
+          ["Linked list", "insert at the head", "O(1)", "move two arrows"],
+          ["Linked list", "find a value / go to position k", "O(n)", "walk from the head, box by box"],
+          ["Linked list", "insert after a node you already hold", "O(1)", "no walking needed"],
+          ["Stack (list)", "push <code>append</code> / pop <code>pop()</code>", "O(1)", "both at the end"],
+          ["Queue (deque)", "<code>append</code> / <code>popleft()</code>", "O(1)", "both ends are cheap"],
+          ["Queue (plain list)", "<code>pop(0)</code>", "O(n)", "everyone shifts left"],
+          ["BST, balanced", "search / insert", "O(log n)", "1,000 items ≈ 10 levels"],
+          ["BST, a chain (built from sorted input)", "search / insert", "O(n)", "every node has one child: n levels"],
+          ["Graph, adjacency list", "BFS / DFS", "O(V + E)", "each node once, each edge once or twice"],
+          ["Graph, adjacency matrix (exam Q6)", "BFS / DFS", "O(V²)", "each node scans a whole row of V"],
+        ] }] },
+        { label: "Algorithms", blocks: [{ type: "table", head: ["Algorithm", "Time", "Extra space", "Source"], rows: [
+          ["Linear search", "O(n), best O(1)", "O(1)", "L9 p6–7"],
+          ["Binary search (sorted list!)", "O(log n), best O(1)", "O(1) loop, O(log n) recursive", "L9 p8–12"],
+          ["Fibonacci, naive recursion", "O(2ⁿ)", "O(n) call stack", "L7 p37"],
+          ["Fibonacci, DP table", "O(n)", "O(n) table", "L7 p37"],
+          ["<code>factorial_sum</code>: no memo / memo", "O(n²) / O(n)", "O(1) / O(n)", "Ex7 Ex2 Hard"],
+          ["Tower of Hanoi", "O(2ⁿ): 2ⁿ − 1 moves", "O(n) call stack", "Ex7 Ex1"],
+          ["Activity selection (greedy)", "O(n log n): the sort wins over the O(n) pass", "O(n)", "Ex7 Ex3"],
+          ["Weighted activities (DP)", "O(n log n): the sorts again", "O(n)", "Ex7 Ex3 Hard"],
+          ["Dijkstra (matrix, scan for the nearest, as on this site)", "O(V²)", "O(V)", "<a href=\"#algorithms/dp-greedy\">DP, greedy & Dijkstra</a>"],
+          ["BFS / DFS", "O(V + E) list, O(V²) matrix", "O(V)", "<a href=\"#algorithms/dfs-bfs\">DFS & BFS</a>"],
+        ] }] },
+        { label: "The five sorts", blocks: [() => sortTable(), `<p class="small muted">Ex9 M4 asks for exactly this table. Quick sort's best case is O(n) only when all keys are equal (3-way split).</p>`] },
+      ] },
+
+      { type: "h", text: "Drill: state the Big-O", sub: "17 snippets, from easy to exam-shaped. A wrong answer tells you why." },
+      { type: "widget", render: drillWidget },
+
+      { type: "h", text: "Writing it in the exam", sub: "The exam says it tests whether you can “design, analyse, debug, and implement”." },
+      { type: "callout", kind: "rule", title: "Three sentences", html: "<ol><li><b>Name n</b>: “Let n be the number of machines.”</li><li><b>Count</b>: “The loop runs n times, and each round does … (O(1) work / a scan of n).”</li><li><b>Conclude</b>: “So about n × n steps: O(n²) time. Extra memory: … O(n).”</li></ol>" },
+      { type: "callout", kind: "exam", title: "Worked example: exam Q6, dfs_route", html: "<p>“Let n be the number of machines, so the matrix is n × n. Each machine is pushed and popped once, and for each one the for loop reads its whole row: n checks. So n × n = O(n²) time. <code>visited</code> and <code>stack</code> hold at most n machines: O(n) extra memory.”</p>" },
+      `<p>A second, shorter one, for Q3: “<code>process_inventory</code> reads one index, then either subtracts 1 or appends one item. There is no loop, so it takes the same time for 3 items or 3 million: O(1) time and O(1) extra memory.”</p>`,
+      {
+        type: "tryit",
+        title: "Measure it: list vs set",
+        task: "Same task, two containers. Run it and read the last column: about ×4 for the list (O(n²)), about ×2 for the set (O(n)). Your times will differ; the ratios are what matter.",
+        code: `
+          import time
+
+          def count_common(a, b):                # b may be a list or a set
+              count = 0
+              for x in a:
+                  if x in b:                     # list: scan; set: jump
+                      count += 1
+              return count
+
+          for kind in ["list", "set"]:
+              previous = None
+              for n in [1000, 2000, 4000]:
+                  a = list(range(n))
+                  b = list(range(n)) if kind == "list" else set(range(n))
+                  start = time.perf_counter()
+                  count_common(a, b)
+                  t = time.perf_counter() - start
+                  ratio = f"x{t / previous:.1f}" if previous else ""
+                  print(kind, n, f"{t * 1000:.2f} ms", ratio)
+                  previous = t`,
+      },
+      { type: "mistakes", items: [
+        { title: "Not saying what n is", wrong: "It is O(n).", right: "Let n be the number of machines. It is O(n²).", why: "In Q5 there are two sizes (machines and days). The marker needs to know which one you mean." },
+        { title: "Treating one line as one step", wrong: "if nb not in visited:   # O(1)", right: "# O(n) on a list; O(1) on a set", why: "<code>in</code>, <code>sum</code>, <code>sorted</code>, slices and <code>pop(0)</code> hide a loop." },
+        { title: "Matrix DFS as O(V + E)", wrong: "dfs_route on a tree: n − 1 edges → O(n)", right: "O(n²): each popped machine scans a row of n", why: "With a matrix you pay for the zeros too." },
+        { title: "NumPy is O(1)", wrong: "np.sum(usage_matrix, axis=1)   # one line → O(1)", right: "# O(m × d): it adds every cell", why: "NumPy is fast because it loops in C, not because it skips work." },
+        { title: "Sorting inside a loop", wrong: "for i in range(n):\n    best = sorted(nums)[-1]", right: "best = max(nums)          # O(n), once", why: "n sorts = O(n² log n)." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "What is the Big-O?", code: `
+          for i in range(n):
+              for j in range(i, n):
+                  print(i, j)`, options: ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"], answer: 2,
+        wrong: { 0: "There is a loop inside a loop, and both depend on n.", 1: "Nothing halves." },
+        hint: "n = 4: the inner loop runs 4 + 3 + 2 + 1 times.", explain: "n + (n − 1) + … + 1 = n(n + 1)/2: O(n²)." },
+      { type: "mc", q: "Exam Q6 uses an n × n adjacency matrix. What is the time of DFS on it?", options: ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"], answer: 2,
+        wrong: { 0: "That would need an adjacency list. A matrix row is always n long, even for a leaf.", 3: "Each machine is visited once; nothing explodes." },
+        hint: "How long is one row? How many rows are read?", explain: "n rows × n columns = O(n²). With an adjacency list it would be O(V + E)." },
+      { type: "predict", q: "What does this print?", code: `
+          count = 0
+          i = 64
+          while i > 1:
+              i = i // 2
+              count += 1
+          print(count)`, answer: "6",
+        hint: "64 → 32 → 16 → 8 → 4 → 2 → 1.", explain: "6 halvings: log₂ 64 = 6. That is O(log n)." },
+      { type: "mc", q: "Which of these is O(1) on average?", options: ["<code>x in my_list</code>", "<code>x in my_set</code>", "<code>my_list.pop(0)</code>", "<code>sorted(my_list)</code>"], answer: 1,
+        wrong: { 0: "A list is scanned: O(n).", 2: "Everyone shifts left: O(n).", 3: "Sorting is O(n log n)." },
+        hint: "Which container jumps straight to the answer with a hash?", explain: "A set (like a dict) hashes the value and jumps to its box: O(1) on average." },
+      { type: "write", q: "This version is O(n²). Write <code>common(a, b)</code> in <b>O(n)</b>: return the items of <code>a</code> (in a's order) that are also in <code>b</code>.",
+        starter: `
+          def common(a, b):
+              result = []
+              for x in a:
+                  if x in b:                       # O(n) on a list: make this O(1)
+                      result.append(x)
+              return result
+
+          print(common([1, 2, 3, 4], [4, 1]))      # [1, 4]`,
+        checks: [["common([1, 2, 3, 4], [4, 1])", "[1, 4]"], ["common([], [1])", "[]"], ["common([5, 5, 6], [5])", "[5, 5]"]],
+        test: "class NoScan(list):\n    def __contains__(self, x):\n        raise AssertionError('x in b still scans the list: make a set from b before the loop')\nassert common([1, 2, 3], NoScan([3, 1])) == [1, 3]",
+        solution: `
+          def common(a, b):
+              b_set = set(b)                       # O(n), once
+              result = []
+              for x in a:                          # n rounds
+                  if x in b_set:                   # O(1) on average
+                      result.append(x)
+              return result                        # after the loop`,
+        hint: "Before the loop: <code>b_set = set(b)</code>. Then ask <code>x in b_set</code>.",
+        explain: "Building the set is O(n) once; each lookup is O(1): n + n = O(n)." },
+      { type: "explain", q: "Exam style. In 3–4 sentences, state and justify the time and space complexity of <code>dfs_route(adj_matrix, start)</code> (the iterative version with a stack).",
+        answer: "<p>Let n be the number of machines, so the adjacency matrix is n × n. Each machine is pushed onto the stack and popped once, because the network is a tree and visited machines are skipped. For every popped machine the for loop reads its whole row of n entries, so the total is n × n = O(n²) time (the <code>not in visited</code> check on a list only runs for real neighbours and adds at most O(n²) more). The visited list and the stack each hold at most n machines, so the extra memory is O(n).</p>",
+        points: ["define n = number of machines (n × n matrix)", "each machine popped once", "each pop scans a row of n → O(n²) time", "visited + stack ≤ n → O(n) space", "bonus: a set for visited, or an adjacency list (O(V + E))"],
+        hint: "Use the three sentences: name n, count, conclude. Then one line for memory." },
     ],
   };
 
@@ -2800,12 +3401,12 @@
     title: "Algorithms & data structures",
     order: 4,
     blurb: "Linked lists, stacks and queues, recursion and Big-O, DP and greedy, searching and sorting, trees, and DFS/BFS on an adjacency matrix (exam Q6).",
-    covers: ["Linked lists, stacks, queues", "Recursion (call stack, Fibonacci tree, Hanoi), Big-O", "DP, greedy, Dijkstra", "Binary search, sorting, stability, <code>key=lambda</code>", "Trees, BST, DFS and BFS"],
+    covers: ["Linked lists, stacks, queues", "Recursion (call stack, Fibonacci tree, Hanoi), Big-O: cases, space, recursion trees, a 17-snippet drill", "DP, greedy, Dijkstra", "Binary search, sorting, stability, <code>key=lambda</code>", "Trees, BST, DFS and BFS"],
     exam: [
       "<b>Q6</b>: <code>dfs_route(adj_matrix, start)</code>: DFS on a tree given as an adjacency matrix, iterative (stack) or recursive, plus a 4–5 sentence explanation.",
       "<b>Q3</b>: the queue idea: <code>low_stock_queue.append(item_index)</code>.",
       "The exam says it tests whether you can <i>analyse</i> code: be ready to state a Big-O in a sentence.",
     ],
-    topics: [linkedLists, stacksQueues, recursion, bigO, dpGreedy, searching, sorting, trees, dfsBfs],
+    topics: [linkedLists, stacksQueues, recursion, bigO, bigOCases, bigODrill, dpGreedy, searching, sorting, trees, dfsBfs],
   });
 })();
