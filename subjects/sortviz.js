@@ -310,7 +310,7 @@
     ["quick", "Quick sort", "Pick a pivot, split into less / equal / greater, sort both sides.", "O(n log n), worst O(n²)"],
   ];
 
-  const topics = SORTS.map(([id, title, idea, big]) => ({ id, title, summary: idea, sources: "Sorting, Line by Line; L9 p13–30; Ex9", blocks: sortBlocks(id, big), quiz: QUIZ[id] }));
+  const topics = SORTS.map(([id, title, idea, big]) => ({ id, title, summary: idea, sources: "Sorting, Line by Line; Ex9", blocks: sortBlocks(id, big), quiz: QUIZ[id] }));
 
   topics.push({
     id: "compare", title: "Compare all five",
@@ -346,7 +346,7 @@
   topics.push({
     id: "bigo", title: "Big-O",
     summary: "How the work grows when the list gets bigger: curves, a slider for n, the five you will meet, and the five sorts table.",
-    sources: "Sorting, Line by Line; L7 p31–35; L9 p4",
+    sources: "Sorting, Line by Line",
     blocks: [
       { type: "h", text: "What Big-O means" },
       `<p>Big-O says how the <b>work grows</b> when the list gets bigger. It ignores how fast your computer is. The easy test: <b>double the list</b> and see what happens to the work. n is the length of the list.</p>`,

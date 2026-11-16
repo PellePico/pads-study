@@ -246,7 +246,7 @@
     id: "linked-lists",
     title: "Linked lists",
     summary: "A chain of <code>Node</code> boxes. Each box holds data and an arrow (<code>next</code>) to the next box. Insert and delete by moving arrows.",
-    sources: "L7 p3–16; Ex7",
+    sources: "Ex7",
     blocks: [
       { type: "h", text: "A chain of boxes", sub: "Each node holds a value and a pointer to the next node. The last one points at None." },
       { type: "code", code: `
@@ -262,7 +262,7 @@
 
         node1.next = node2                   # 3 → 5
         node2.next = node3                   # 5 → 13
-        node3.next = node4                   # 13 → 2`, caption: "From L7 p6–8 and your Ex7 notebook" },
+        node3.next = node4                   # 13 → 2`, caption: "From your Ex7 notebook" },
       () => h("div", { class: "card" }, llDraw(Object.assign(llRow([3, 5, 13, 2], { w: 520 }), { ptrs: [{ name: "node1 (head)", at: "n0" }] }))),
       { type: "table", caption: "Python list vs linked list", head: ["Job", "Python list", "Linked list", "Tiny example"], rows: [
         ["Get item number <i>i</i>", "O(1): jump straight there", "O(n): walk from the head", "the 4th item: the list jumps once, the linked list hops 3 times"],
@@ -324,7 +324,7 @@
       { type: "table", head: ["Kind", "Extra arrow", "Used for"], rows: [
         ["Singly", "none", "the basic chain; stacks and queues"],
         ["Doubly", "<code>self.prev</code> to the box before", "walking back: undo/redo, browser back"],
-        ["Circular", "last box → head", "playlist on repeat, round-robin CPU turns (L7 p14)"],
+        ["Circular", "last box → head", "playlist on repeat, round-robin CPU turns"],
       ] },
 
       {
@@ -532,7 +532,7 @@
     title: "Stacks & queues",
     summary: "A stack takes from the top (last in, first out). A queue takes from the front (first in, first out). DFS uses a stack, BFS uses a queue.",
     exam: ["Q3 queue", "Q6 DFS stack"],
-    sources: "L7 p17–22; Ex7",
+    sources: "Ex7",
     blocks: [
       { type: "h", text: "Two ways to take turns" },
       { type: "table", head: ["", "Stack (LIFO)", "Queue (FIFO)"], rows: [
@@ -570,7 +570,7 @@
       },
       { type: "callout", kind: "warn", title: "Why not list.pop(0)?", html: "<p>It works, but a list has to slide every other item one place left. 1,000 people in the line → 999 moves for every dequeue. <code>deque.popleft()</code> moves nothing: O(1).</p>" },
       { type: "callout", kind: "exam", title: "Exam Q3 and Q6", html: "<p><b>Q3</b> kept a <code>low_stock_queue</code>: when an item ran out, its index joined the back with <code>low_stock_queue.append(item_index)</code>. <b>Q6</b> (DFS) can be written with a stack: <code>stack.append(...)</code> and <code>stack.pop()</code>.</p>" },
-      { type: "h", text: "Built from linked lists", sub: "L7 p18–21 and the Ex7 demo build both on Node boxes." },
+      { type: "h", text: "Built from linked lists", sub: "The Ex7 demo builds both on Node boxes." },
       { type: "table", head: ["", "Stack on a linked list", "Queue on a linked list"], rows: [
         ["Keeps", "<code>self.head</code> (the top)", "<code>self.front</code> and <code>self.rear</code>"],
         ["Add", "new box points at the old head; head = new box", "old rear points at the new box; rear = new box"],
@@ -971,7 +971,7 @@
     title: "Recursion",
     summary: "A function that calls itself on a smaller problem, until it hits a base case. Each call gets its own frame on the call stack.",
     exam: ["Q6 recursive DFS"],
-    sources: "NB §24; L5 p30–33; L7 p36; Ex7",
+    sources: "NB §24; Ex7",
     blocks: [
       { type: "h", text: "Two parts, always", sub: "A base case that stops, and a recursive case that makes the problem smaller." },
       { type: "table", head: ["Part", "What it does", "factorial(n)"], rows: [
@@ -1189,7 +1189,7 @@
     id: "big-o",
     title: "Big-O",
     summary: "Big-O says how the work grows when the input grows. The easy test: <b>double n</b> and see what happens to the work.",
-    sources: "L7 p31–35; L9 p4; Ex9",
+    sources: "Ex9",
     blocks: [
       { type: "h", text: "Double the input: what happens to the work?" },
       { type: "table", head: ["Big-O", "Name", "Double n →", "Tiny example (n = 8 → 16)"], rows: [
@@ -1438,11 +1438,11 @@
     id: "big-o-cases",
     title: "Big-O: best/worst, space & recursion",
     summary: "One algorithm can be quick on one list and slow on another. Memory grows too. And recursion has its own counting rule: <b>levels × work per level</b>.",
-    sources: "L7 p23, p33, p36–38; L9 p4, p48; Ex7; Ex9 E4, M4, H3–H4",
+    sources: "Ex7; Ex9 E4, M4, H3–H4",
     blocks: [
       { type: "callout", kind: "note", title: "Start with the basics", html: "<p>Double n → ×2 or ×4, the three rules and reading loops: <a href=\"#algorithms/big-o\">Big-O</a>. The curves: <a href=\"#sortviz/bigo\">Sorting visualizer → Big-O</a>. All costs on one page and a drill: <a href=\"#algorithms/big-o-drill\">Big-O cheat sheet & drill</a>.</p>" },
 
-      { type: "h", text: "Best, average and worst case", sub: "L7 p33: Big-O normally means the worst case." },
+      { type: "h", text: "Best, average and worst case", sub: "Big-O normally means the worst case." },
       { type: "table", head: ["Algorithm", "Best case", "Worst case", "Tiny example (n = 8)"], rows: [
         ["Linear search", "O(1): target first", "O(n): last or missing", "1 check vs 8 checks"],
         ["Binary search (sorted list)", "O(1): target in the middle", "O(log n)", "1 check vs 4 checks (8 → 4 → 2 → 1)"],
@@ -1452,20 +1452,20 @@
         ["Quick", "O(n log n): pivots split in half", "O(n²): pivot is always the smallest or biggest", "3 levels × 8 vs 8 levels × up to 8"],
       ] },
       { type: "widget", title: "Same algorithm, different input", intro: "Pick an algorithm and an input. The table counts real comparisons for n = 8, 16, 32 and 64.", render: casesWidget },
-      { type: "callout", kind: "tip", title: "Say which case you mean", html: "<p>“Insertion sort is O(n²)” means the worst case. If you mean another case, say it: “insertion sort is O(n) in the <b>best</b> case, when the list is already sorted”. That is the answer to L9 p48 question 2 (a nearly sorted list → insertion sort).</p>" },
+      { type: "callout", kind: "tip", title: "Say which case you mean", html: "<p>“Insertion sort is O(n²)” means the worst case. If you mean another case, say it: “insertion sort is O(n) in the <b>best</b> case, when the list is already sorted”. So a nearly sorted list → insertion sort.</p>" },
 
-      { type: "h", text: "Space: how much extra memory?", sub: "L7 p23: analyse time and space. Ex9 M4 asks for “auxiliary space”: memory on top of the input." },
+      { type: "h", text: "Space: how much extra memory?", sub: "analyse time and space. Ex9 M4 asks for “auxiliary space”: memory on top of the input." },
       { type: "table", head: ["Code", "Extra memory", "Why (n = 8)"], code: [0], rows: [
         ["total = 0\nfor x in nums: total += x", "O(1)", "one number, also when n = 1,000,000"],
         ["doubled = [x * 2 for x in nums]", "O(n)", "a new list of 8 items"],
         ["seen = set()  # filled in a loop", "O(n)", "up to 8 items"],
         ["bubble / selection / insertion in place", "O(1)", "only i, j and key"],
         ["merge sort", "O(n)", "the halves and the merged lists"],
-        ["F = [0] * (n + 1)  # fib table", "O(n)", "9 boxes (L7 p37)"],
+        ["F = [0] * (n + 1)  # fib table", "O(n)", "9 boxes"],
         ["def countdown(n): ... countdown(n - 1)", "O(n)", "8 frames wait on the call stack"],
       ] },
       { type: "widget", title: "Recursion costs memory too", intro: "Every open call is a frame on the call stack. Pick a function and n: this is the stack at its deepest point.", render: stackWidget },
-      { type: "callout", kind: "warn", title: "Time and memory are separate questions", html: "<p>Ex9 H3: a stopwatch measures time only. Merge sort is fast <b>and</b> needs O(n) extra memory. Naive Fibonacci is slow (O(2ⁿ) time) but its stack is only n deep (O(n) space, L7 p37).</p>" },
+      { type: "callout", kind: "warn", title: "Time and memory are separate questions", html: "<p>Ex9 H3: a stopwatch measures time only. Merge sort is fast <b>and</b> needs O(n) extra memory. Naive Fibonacci is slow (O(2ⁿ) time) but its stack is only n deep (O(n) space).</p>" },
 
       { type: "h", text: "Recursion: levels × work per level", sub: "Your notes: merge/quick recursion was the hard part. This is the one rule you need." },
       { type: "callout", kind: "rule", title: "Draw the call tree, then multiply", html: "<ol><li>How many <b>levels</b> does the tree have?</li><li>How much <b>work on one level</b> (all calls on that level together)?</li><li>Multiply. Merge sort, n = 8: 3 levels × 8 = <b>24 = n log₂ n</b>.</li></ol>" },
@@ -1476,8 +1476,8 @@
         ["merge sort", "log n", "n (merging)", "<b>O(n log n)</b>"],
         ["quick sort, good pivot", "log n", "n (splitting into less / equal / greater)", "<b>O(n log n)</b>"],
         ["quick sort, bad pivot (e.g. [1, 2, 3, 4, 5] and the first item)", "n", "up to n", "<b>O(n²)</b>"],
-        ["naive <code>fib(n)</code>: two calls each", "n", "doubles each level: 1, 2, 4, 8 …", "<b>O(2ⁿ)</b> (L7 p37)"],
-        ["<code>fib(n)</code> with memo or a table", "n", "each value once", "<b>O(n)</b> (L7 p37–38)"],
+        ["naive <code>fib(n)</code>: two calls each", "n", "doubles each level: 1, 2, 4, 8 …", "<b>O(2ⁿ)</b>"],
+        ["<code>fib(n)</code> with memo or a table", "n", "each value once", "<b>O(n)</b>"],
         ["Tower of Hanoi", "n", "doubles each level", "<b>O(2ⁿ)</b>: 2ⁿ − 1 moves"],
         ["<code>sum_list(nums[1:])</code>", "n", "the slice copies up to n items", "<b>O(n²)</b>: a hidden cost"],
       ] },
@@ -1523,17 +1523,17 @@
         expectOutput: "5 15 9\n10 177 19\n15 1973 29\n20 21891 39",
       },
       { type: "mistakes", items: [
-        { title: "Quoting the best case as the Big-O", wrong: "Linear search is O(1): sometimes it finds it at once.", right: "Linear search is O(n) (worst case);\nO(1) only in the best case.", why: "Without a word added, Big-O means the worst case (L7 p33)." },
-        { title: "Thinking recursion needs no memory", wrong: "factorial(n), recursive: O(1) space", right: "O(n) space: n frames on the call stack", why: "Every call waits until the one below it returns (L7 p36)." },
+        { title: "Quoting the best case as the Big-O", wrong: "Linear search is O(1): sometimes it finds it at once.", right: "Linear search is O(n) (worst case);\nO(1) only in the best case.", why: "Without a word added, Big-O means the worst case." },
+        { title: "Thinking recursion needs no memory", wrong: "factorial(n), recursive: O(1) space", right: "O(n) space: n frames on the call stack", why: "Every call waits until the one below it returns." },
         { title: "Counting calls, not work", wrong: "merge sort makes about 2n calls → O(n)", right: "log n levels × n work per level → O(n log n)", why: "The merging inside the calls is where the work is." },
         { title: "Slicing looks free", wrong: "return nums[0] + sum_list(nums[1:])   # O(n)", right: "# O(n²): each nums[1:] copies the rest\n# O(n) with an index: sum_list(nums, i + 1)", why: "A slice builds a new list: n − 1, then n − 2, … items." },
-        { title: "2ⁿ calls means 2ⁿ memory", wrong: "naive fib: O(2ⁿ) space", right: "naive fib: O(2ⁿ) time, O(n) space", why: "Only one path of the call tree is on the stack at a time (L7 p37)." },
+        { title: "2ⁿ calls means 2ⁿ memory", wrong: "naive fib: O(2ⁿ) space", right: "naive fib: O(2ⁿ) time, O(n) space", why: "Only one path of the call tree is on the stack at a time." },
       ] },
     ],
     quiz: [
       { type: "mc", q: "Insertion sort gets a list of 1,000 items that is <b>already sorted</b>. Which Big-O describes this run?", options: ["O(1)", "O(n)", "O(n log n)", "O(n²)"], answer: 1,
         wrong: { 0: "It still has to look at each item once to see it is in place.", 2: "No halving happens in insertion sort.", 3: "That is the worst case (reversed). Here nothing slides." },
-        hint: "How many comparisons does each card need if it is already in place?", explain: "One comparison per card: 999 in total. That is the best case, O(n). This is why L9 p48 picks insertion sort for an almost sorted list." },
+        hint: "How many comparisons does each card need if it is already in place?", explain: "One comparison per card: 999 in total. That is the best case, O(n). This is why insertion sort is the pick for an almost sorted list." },
       { type: "mc", q: "What is the extra memory of this function?", code: `
           def squares(nums):
               return [x * x for x in nums]`, options: ["O(1)", "O(log n)", "O(n)", "O(n²)"], answer: 2,
@@ -1663,7 +1663,7 @@
                 return n
             return fib(n - 1) + fib(n - 2)`, options: ["O(n)", "O(n log n)", "O(n²)", "O(2ⁿ)"], answer: 3,
       wrong: { 0: "That is the memo or table version. This one repeats work.", 2: "The call tree doubles on each level; it is much worse than n²." },
-      hint: "Two calls per call, about n levels.", explain: "The call tree roughly doubles each level: O(2ⁿ) (L7 p37). With a memo: O(n)." },
+      hint: "Two calls per call, about n levels.", explain: "The call tree roughly doubles each level: O(2ⁿ). With a memo: O(n)." },
     { code: `
         # Exam w25 Q3
         def process_inventory(stock, item_index, min_stock, low_stock_queue):
@@ -1745,7 +1745,7 @@
     id: "big-o-drill",
     title: "Big-O: cheat sheet & exam drill",
     summary: "Every cost on this site in one place, then 17 snippets to practise on, then how to write the answer in the exam.",
-    sources: "L7 p23, p32–39; L9 p4, p48; Ex7; Ex9 M4; Exam w25 Q3, Q5, Q6",
+    sources: "Ex7; Ex9 M4; Exam w25 Q3, Q5, Q6",
     exam: ["Q3", "Q5", "Q6 analyse"],
     blocks: [
       { type: "callout", kind: "note", title: "First time here?", html: "<p>Start with <a href=\"#algorithms/big-o\">Big-O</a> (double n → ×2, ×4) and <a href=\"#algorithms/big-o-cases\">best/worst, space & recursion</a>.</p>" },
@@ -1779,10 +1779,10 @@
           ["Graph, adjacency matrix (exam Q6)", "BFS / DFS", "O(V²)", "each node scans a whole row of V"],
         ] }] },
         { label: "Algorithms", blocks: [{ type: "table", head: ["Algorithm", "Time", "Extra space", "Source"], rows: [
-          ["Linear search", "O(n), best O(1)", "O(1)", "L9 p6–7"],
-          ["Binary search (sorted list!)", "O(log n), best O(1)", "O(1) loop, O(log n) recursive", "L9 p8–12"],
-          ["Fibonacci, naive recursion", "O(2ⁿ)", "O(n) call stack", "L7 p37"],
-          ["Fibonacci, DP table", "O(n)", "O(n) table", "L7 p37"],
+          ["Linear search", "O(n), best O(1)", "O(1)", ""],
+          ["Binary search (sorted list!)", "O(log n), best O(1)", "O(1) loop, O(log n) recursive", ""],
+          ["Fibonacci, naive recursion", "O(2ⁿ)", "O(n) call stack", ""],
+          ["Fibonacci, DP table", "O(n)", "O(n) table", ""],
           ["<code>factorial_sum</code>: no memo / memo", "O(n²) / O(n)", "O(1) / O(n)", "Ex7 Ex2 Hard"],
           ["Tower of Hanoi", "O(2ⁿ): 2ⁿ − 1 moves", "O(n) call stack", "Ex7 Ex1"],
           ["Activity selection (greedy)", "O(n log n): the sort wins over the O(n) pass", "O(n)", "Ex7 Ex3"],
@@ -1996,7 +1996,7 @@
     id: "dp-greedy",
     title: "DP, greedy & Dijkstra",
     summary: "Dynamic programming stores answers to small problems so they are never solved twice. Greedy takes the best-looking choice at each step. Dijkstra is greedy on a graph.",
-    sources: "L7 p23–30, 37–39; Ex7",
+    sources: "Ex7",
     blocks: [
       { type: "h", text: "Dynamic programming: never solve the same thing twice" },
       { type: "table", head: ["Way", "How", "Fibonacci example"], rows: [
@@ -2067,7 +2067,7 @@
         legend: [["held", "chosen now"], ["done", "final"], ["cmp", "edges being relaxed"]],
         visual: djVisual,
       },
-      { type: "table", caption: "Recursion vs DP vs greedy (L7 p39)", head: ["", "Plain recursion", "Dynamic programming", "Greedy"], rows: [
+      { type: "table", caption: "Recursion vs DP vs greedy", head: ["", "Plain recursion", "Dynamic programming", "Greedy"], rows: [
         ["Idea", "split into smaller copies", "split, and store every answer", "take the best choice now"],
         ["Stores", "nothing", "a memo dict or a table", "only the choices made"],
         ["Looks back?", "no", "yes, reads stored answers", "never"],
@@ -2293,7 +2293,7 @@
     id: "searching",
     title: "Searching",
     summary: "Linear search checks one item at a time: O(n). Binary search halves a <b>sorted</b> list each step: O(log n).",
-    sources: "L9 p6–12",
+    sources: "",
     blocks: [
       { type: "h", text: "Two ways to find something" },
       { type: "table", head: ["", "Linear search", "Binary search"], rows: [
@@ -2319,8 +2319,8 @@
               for i, value in enumerate(values):   # index and value together
                   if value == target:
                       return i                     # found: stop right here
-              return -1                            # after the loop: checked them all`, caption: "Linear search (L9 p6)" },
-      { type: "callout", kind: "tip", title: "Sort first?", html: "<p>Sorting costs O(n log n), more than one linear search (O(n)). So for <b>one</b> search, don't sort. For <b>many</b> searches in the same data, sort once and use binary search every time (L9 p11–12). Tiny example: 1,000 searches in 1,000,000 items: linear is up to 1,000,000,000 checks; sorting once (about 20,000,000 steps) + 1,000 binary searches (20,000 checks) is far less.</p>" },
+              return -1                            # after the loop: checked them all`, caption: "Linear search" },
+      { type: "callout", kind: "tip", title: "Sort first?", html: "<p>Sorting costs O(n log n), more than one linear search (O(n)). So for <b>one</b> search, don't sort. For <b>many</b> searches in the same data, sort once and use binary search every time. Tiny example: 1,000 searches in 1,000,000 items: linear is up to 1,000,000,000 checks; sorting once (about 20,000,000 steps) + 1,000 binary searches (20,000 checks) is far less.</p>" },
       {
         type: "tryit",
         title: "Count the checks",
@@ -2533,7 +2533,7 @@
     id: "sorting",
     title: "Sorting",
     summary: "The five sorts in one table, merge sort's recursion, stability, and <code>key=lambda</code>. Step through each sort line by line on your sorting site.",
-    sources: "L9 p13–30; NB §27; Ex9",
+    sources: "NB §27; Ex9",
     blocks: [
       { type: "callout", kind: "note", title: "Line-by-line steppers", html: `<p>The Sorting visualizer tab has a stepper for every sort below, plus a Big-O tab with curves. <a href="#sortviz">Open the Sorting visualizer</a> · <a href="#sortviz/bigo">Big-O curves</a></p>` },
       { type: "h", text: "The five sorts at a glance" },
@@ -2542,7 +2542,7 @@
         ["bubble, selection, insertion", "O(n²)", "about <b>×4</b> each time"],
         ["merge, <code>sorted()</code>", "O(n log n)", "about <b>×2.3</b> each time"],
       ] },
-      { type: "table", caption: "Which sort when (L9 p47–48)", head: ["Situation", "Pick", "Why"], rows: [
+      { type: "table", caption: "Which sort when", head: ["Situation", "Pick", "Why"], rows: [
         ["Real code", "<code>sorted()</code> / <code>.sort()</code>", "O(n log n), stable, already written"],
         ["Nearly sorted list", "insertion", "O(n) best case: almost nothing slides"],
         ["Must be O(n log n) every time", "merge", "never worse; costs O(n) extra space"],
@@ -3017,7 +3017,7 @@
   /* ================================================================
      TOPIC 16a: Trees & BST
      ================================================================ */
-  // A–G tree from L9 p33
+  // A–G tree
   const AG = { A: ["B", "C"], B: ["D", "E"], C: ["F", "G"], D: [], E: [], F: [], G: [] };
   const AG_POS = { A: [200, 30], B: [110, 100], C: [290, 100], D: [60, 175], E: [160, 175], F: [240, 175], G: [340, 175] };
   function agOrder(kind) {
@@ -3126,7 +3126,7 @@
     bStart.click();
   }
 
-  // recursive in-order on Node(8, Node(3), Node(10)), L9 p37
+  // recursive in-order on Node(8, Node(3), Node(10))
   function inorderSteps() {
     const S = [], frames = [{ name: "global", vars: { root: "Node(8)" } }];
     const fr = () => frames.map(f => Object.assign({}, f));
@@ -3173,7 +3173,7 @@
     title: "Trees & BST",
     summary: "A tree is a root with children, and no cycles. A binary search tree keeps smaller values left and bigger right. Pre-, in- and post-order are three ways to walk one.",
     exam: ["Q6 tree"],
-    sources: "L9 p31–39",
+    sources: "",
     blocks: [
       { type: "h", text: "Words for trees" },
       { type: "table", head: ["Word", "Meaning", "In the A–G tree below"], rows: [
@@ -3187,14 +3187,14 @@
 
       { type: "h", text: "Three depth-first orders", sub: "Same tree, same recursion; only the position of print changes." },
       { type: "widget", render: ordersWidget },
-      { type: "table", caption: "The A–G tree (L9 p33)", head: ["Order", "Rule", "Result"], rows: [
+      { type: "table", caption: "The A–G tree", head: ["Order", "Rule", "Result"], rows: [
         ["Pre-order", "root, left, right", "<code>A B D E C F G</code>"],
         ["In-order", "left, root, right", "<code>D B E A F C G</code>"],
         ["Post-order", "left, right, root", "<code>D E B F G C A</code>"],
       ] },
       { type: "callout", kind: "tip", title: "Trick: where is the print?", html: "<p>Pre = print <b>before</b> both calls. In = print <b>in between</b>. Post = print <b>after</b> both calls.</p>" },
 
-      { type: "h", text: "The recursion behind it", sub: "L9 p37. Watch the None spots: they are the base case." },
+      { type: "h", text: "The recursion behind it", sub: "Watch the None spots: they are the base case." },
       {
         type: "stepper",
         title: "inorder(root) on 8 / 3 / 10",
@@ -3241,7 +3241,7 @@
                   if node.left:                    # children join at the back
                       queue.append(node.left)
                   if node.right:
-                      queue.append(node.right)     # A-G tree: A B C D E F G`, caption: "L9 p38–39" },
+                      queue.append(node.right)     # A-G tree: A B C D E F G` },
       {
         type: "tryit",
         title: "Build the A–G tree and walk it",
@@ -3353,7 +3353,7 @@
   const GRAPHS = [
     { name: "Machine tree (exam Q6 style)", labels: ["0", "1", "2", "3", "4", "5", "6"], edges: [[0, 1], [0, 4], [1, 2], [1, 3], [4, 5], [3, 6]],
       pos: [[200, 30], [110, 100], [60, 175], [160, 175], [290, 100], [290, 175], [160, 245]], w: 360, h: 275 },
-    { name: "L9 graph (has cycles)", labels: ["A", "B", "C", "D", "E", "F"], edges: [[0, 1], [0, 2], [1, 3], [1, 4], [2, 4], [2, 5], [3, 4]],
+    { name: "Course graph (has cycles)", labels: ["A", "B", "C", "D", "E", "F"], edges: [[0, 1], [0, 2], [1, 3], [1, 4], [2, 4], [2, 5], [3, 4]],
       pos: [[180, 30], [90, 110], [270, 110], [40, 210], [180, 200], [320, 210]], w: 360, h: 245 },
   ];
   const matrixOf = g => { const M = g.labels.map(() => g.labels.map(() => 0)); g.edges.forEach(([a, b]) => { M[a][b] = 1; M[b][a] = 1; }); return M; };
@@ -3554,7 +3554,7 @@
     title: "DFS & BFS",
     summary: "Depth-first goes down one branch to the end, then backtracks (a stack or recursion). Breadth-first goes level by level (a queue). Exam Q6 asked for DFS on an adjacency matrix.",
     exam: ["Q6 DFS on an adjacency matrix"],
-    sources: "L9 p34, 40–46; Ex7 demo",
+    sources: "Ex7 demo",
     blocks: [
       { type: "callout", kind: "exam", title: "Exam Q6 (last year)", html: "<p>“You are given a tree of vending machines, represented by an <b>adjacency matrix</b>. Compute a DFS traversal order starting from a specified machine. Implement DFS either iteratively or recursively. Return a list of machine indices in the order they are visited.” Plus a 4–5 sentence explanation of DFS as a restocking strategy. Signature: <code>def dfs_route(adj_matrix, start):</code></p>" },
       { type: "h", text: "Two ways to explore" },
@@ -3562,14 +3562,14 @@
         ["Idea", "go as deep as possible, then back up", "visit everything 1 step away, then 2 steps, …"],
         ["Holds the to-do list in", "a <b>stack</b> (<code>pop()</code>), or recursion", "a <b>queue</b> (<code>popleft()</code>)"],
         ["Machine tree from 0", "<code>0 1 2 3 6 4 5</code>", "<code>0 1 4 2 3 5 6</code>"],
-        ["L9 graph from A", "<code>A B D E C F</code>", "<code>A B C D E F</code>"],
+        ["Course graph from A", "<code>A B D E C F</code>", "<code>A B C D E F</code>"],
         ["Good for", "following a route to the end: mazes, restock routes, puzzles", "fewest hops in an unweighted graph"],
         ["Big-O", "O(V + E) with a list; O(V²) with a matrix", "same"],
       ] },
 
       { type: "h", text: "The adjacency matrix", sub: "Row i, column j is 1 when there is an edge between node i and node j." },
       { type: "widget", render: adjWidget },
-      { type: "table", head: ["You want", "Matrix", "Adjacency list (L9)"], code: [1, 2], rows: [
+      { type: "table", head: ["You want", "Matrix", "Adjacency list"], code: [1, 2], rows: [
         ["Is there an edge A–C?", "adj_matrix[0][2] == 1", "\"C\" in graph[\"A\"]"],
         ["A's neighbours", "[j for j in range(n) if adj_matrix[0][j] == 1]", "graph[\"A\"]"],
         ["Number of nodes", "len(adj_matrix)", "len(graph)"],
@@ -3600,7 +3600,7 @@
         visual: recDfsVisual,
       },
 
-      { type: "h", text: "Traces to know (L9 p45–46)", sub: "graph = {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'E', 'F'], 'D': ['B', 'E'], 'E': ['B', 'C', 'D'], 'F': ['C']}" },
+      { type: "h", text: "Traces to know", sub: "graph = {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'E', 'F'], 'D': ['B', 'E'], 'E': ['B', 'C', 'D'], 'F': ['C']}" },
       { type: "table", caption: "Recursive DFS from A", head: ["Step", "Visit", "Recursion stack", "Why"], rows: [
         ["1", "A", "A", "start"],
         ["2", "B", "A → B", "A's first neighbour"],
@@ -3620,7 +3620,7 @@
         ["6", "F", "[ ]", "same: done"],
       ] },
       { type: "code", code: `
-          def dfs(graph, start, visited=None):          # L9 p42, adjacency list
+          def dfs(graph, start, visited=None):          # adjacency list
               if visited is None:
                   visited = set()
               visited.add(start)
@@ -3706,7 +3706,7 @@
           assert list(r) == [3, 1, 0, 4, 5, 2, 6], "from 3 expected [3, 1, 0, 4, 5, 2, 6], got " + repr(r)
           G = [[0,1,1,0,0,0],[1,0,0,1,1,0],[1,0,0,0,1,1],[0,1,0,0,1,0],[0,1,1,1,0,0],[0,0,1,0,0,0]]
           r = dfs_route(G, 0)
-          assert list(r) == [0, 1, 3, 4, 2, 5], "on the L9 graph (with a cycle) expected [0, 1, 3, 4, 2, 5], got " + repr(r)
+          assert list(r) == [0, 1, 3, 4, 2, 5], "on the course graph (with a cycle) expected [0, 1, 3, 4, 2, 5], got " + repr(r)
           assert dfs_route([[0]], 0) == [0], "a single node should give [0]"`,
         solution: `
           def dfs_route(adj_matrix, start):
@@ -3764,7 +3764,7 @@
                   if adj_matrix[start][nb] == 1 and nb not in visited:
                       dfs_route(adj_matrix, nb, visited)
               return visited`,
-        hint: "When is the default value <code>[]</code> created: at every call, or once?", explain: "Python makes the default list once. The second route starts with every node already “visited”. That is why L9 uses <code>visited=None</code>." },
+        hint: "When is the default value <code>[]</code> created: at every call, or once?", explain: "Python makes the default list once. The second route starts with every node already “visited”. That is why the course version uses <code>visited=None</code>." },
       { type: "explain", q: "Exam Q6, part 2. In 4–5 sentences, explain how DFS corresponds to a restocking strategy where you follow one branch of the tree completely before backtracking.",
         answer: "<p>DFS starts at the depot machine and always drives on to an unvisited neighbouring machine, so the van follows one branch all the way to its end (a leaf) before doing anything else. When it reaches a machine with no unvisited neighbours, it backtracks to the last machine that still has an unvisited branch and continues from there. The stack (or the recursion's call stack) remembers exactly which machines to go back to, in the right order. Because the network is a tree, every machine is reached exactly once and the van never loops. This finishes one neighbourhood completely before moving to the next, which keeps the route compact, although it does not promise the shortest total distance.</p>",
         points: ["go deep: always continue to an unvisited neighbour", "backtrack at a dead end (leaf) to the last branching machine", "the stack / call stack remembers where to go back", "tree: no cycles, each machine visited exactly once", "finishes one branch before the next (not necessarily shortest)"],

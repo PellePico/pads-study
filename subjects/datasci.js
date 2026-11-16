@@ -241,7 +241,7 @@
     title: "NumPy arrays & shape",
     summary: "What an array is, <code>shape</code>/<code>ndim</code>/<code>dtype</code>, <code>reshape</code>, <code>[row, column]</code> indexing, and joining or cutting arrays.",
     exam: ["Q2 stock_array[i]", "Q3 stock[i] -= 1"],
-    sources: "L8 p3–5, 8; Ex8 E1, M2",
+    sources: "Ex8 E1, M2",
     blocks: [
       { type: "h", text: "An array: one type, maths on everything at once" },
       `<p>A NumPy array looks like a list, but every value has the <b>same type</b>, and maths works on the whole array at once. No loop needed.</p>`,
@@ -448,7 +448,7 @@
     title: "Masks & np.where",
     summary: "A comparison gives a True/False array (a <b>mask</b>). Use it to keep values, count them, or find their positions with <code>np.where</code>.",
     exam: ["Q5 boolean indexing"],
-    sources: "L8 p6; Ex8 E2",
+    sources: "Ex8 E2",
     blocks: [
       { type: "h", text: "A mask is a row of True/False" },
       `<p>Compare an array with a number and you get one True or False <b>per value</b>. That True/False array is called a mask.</p>`,
@@ -780,7 +780,7 @@
     title: "axis= and summaries",
     summary: "<code>np.sum</code>, <code>np.mean</code>, <code>np.median</code> … on one array, and <code>axis=0</code> / <code>axis=1</code> on a table. This is exam Q5.",
     exam: ["Q4 np.sum", "Q5 row totals"],
-    sources: "L8 p7; Ex8 M1; Exam Q5",
+    sources: "Ex8 M1; Exam Q5",
     blocks: [
       { type: "callout", kind: "exam", title: "Exam Q5 needs axis=, and the course never taught it", html: "<p>Q5 gave a <code>usage_matrix</code> (machines × items) and a threshold of 25, and asked for the machines whose <b>row total</b> exceeds it. That needs <code>np.sum(usage_matrix, axis=1)</code>, then a mask, then <code>np.where</code>. The answer is <code>[1 3]</code>. This page teaches each piece.</p>" },
       { type: "h", text: "Summaries of one array" },
@@ -1028,7 +1028,7 @@
     id: "pandas",
     title: "Pandas Series & DataFrames",
     summary: "A DataFrame is a table with labels. Rows are observations, columns are variables. Look at it with <code>head</code>, <code>shape</code>, <code>dtypes</code>, <code>isna().sum()</code>.",
-    sources: "L8 p9–12, 15; Ex8 E3",
+    sources: "Ex8 E3",
     blocks: [
       { type: "callout", kind: "note", title: "Pandas runs in the Try-it boxes", html: "<p>The Try-it boxes on the Pandas pages run real pandas (version 2.2). The first Run downloads it, so it takes a few seconds longer. Last year's exam used NumPy only, but Pandas is core course content (Exercise 8).</p>" },
       { type: "h", text: "Why Pandas?" },
@@ -1217,7 +1217,7 @@
     id: "filter-loc",
     title: "Filtering, loc & iloc",
     summary: "Keep rows with a True/False mask, just like NumPy. Pick rows and columns by <b>label</b> with <code>loc</code> or by <b>position</b> with <code>iloc</code>.",
-    sources: "L8 p13–14; Ex8 E4, M3",
+    sources: "Ex8 E4, M3",
     blocks: [
       { type: "h", text: "Filter rows with a mask" },
       `<p>Same idea as a NumPy mask. <code>sales['units'] &gt; 12</code> gives one True/False per row. Put it inside <code>sales[...]</code> to keep the True rows.</p>`,
@@ -1350,7 +1350,7 @@
     id: "missing",
     title: "Missing data",
     summary: "<code>NaN</code> means “no value here”. Find it with <code>isna()</code>, then drop it with <code>dropna</code> or fill it with <code>fillna</code>, usually with the median, not 0.",
-    sources: "L8 p16; Ex8 M4",
+    sources: "Ex8 M4",
     blocks: [
       { type: "h", text: "NaN: “no value here”" },
       `<p>Two orders (103 and 108) have no rating. Pandas shows <code>NaN</code> (“not a number”). Most functions skip it.</p>`,
@@ -1475,7 +1475,7 @@
     id: "groupby",
     title: "groupby: split, apply, combine",
     summary: "<code>groupby('region')</code> splits the rows into piles, a function runs on each pile, and the answers are combined into one small table.",
-    sources: "L8 p19; Ex8 M7, H1",
+    sources: "Ex8 M7, H1",
     blocks: [
       { type: "h", text: "One number per group" },
       `<p>“Total revenue <b>per region</b>” needs three answers, one for each region. <code>groupby</code> does it in one line.</p>`,
@@ -1641,7 +1641,7 @@
     id: "merge-melt",
     title: "concat, merge & melt",
     summary: "Stack tables with <code>pd.concat</code>, look up extra columns with <code>pd.merge</code> on a key, and turn a wide table into a long one with <code>pd.melt</code>.",
-    sources: "L8 p17–18, 20; Ex8 M5, H2",
+    sources: "Ex8 M5, H2",
     blocks: [
       { type: "h", text: "concat: stack tables on top of each other" },
       { type: "code", code: `
@@ -1859,7 +1859,7 @@
     id: "plot-choose",
     title: "Plotting: which plot when?",
     summary: "Start from the question, then pick the plot: line for order, scatter for pairs, bar for categories, histogram and box for spread, error bars for uncertainty.",
-    sources: "L8 p25–33; Ex8 E5, M6–M8, H3",
+    sources: "Ex8 E5, M6–M8, H3",
     blocks: [
       { type: "callout", kind: "note", title: "Plots on this site", html: "<p>The Try-it boxes only show printed text, so the plots here are drawn by the page. In Jupyter you write the Matplotlib code shown next to each plot.</p>" },
       { type: "h", text: "Start from the question" },
@@ -2013,7 +2013,7 @@
     id: "plot-anatomy",
     title: "Figure anatomy & Seaborn",
     summary: "The parts of a Matplotlib figure (Figure, Axes, Axis, Artist), the <code>fig, ax</code> style, and Seaborn's <code>data=</code>, <code>x=</code>, <code>y=</code>, <code>hue=</code>.",
-    sources: "L8 p22–24, 34–43; Ex8 E5, E6, M9, M10",
+    sources: "Ex8 E5, E6, M9, M10",
     blocks: [
       { type: "h", text: "The parts of a figure" },
       { type: "table", head: ["Part", "What it is", "Tiny example"], code: [2], rows: [

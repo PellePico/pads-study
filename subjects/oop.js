@@ -182,7 +182,7 @@
     title: "Classes & objects",
     summary: "A class is a blueprint, an object is one thing built from it. <code>__init__</code> fills in each object's attributes. Plus aliasing and <code>==</code> vs <code>is</code>.",
     exam: ["Q1 classes"],
-    sources: "L4 p7–17 · NB §18",
+    sources: "NB §18",
     blocks: [
       { type: "h", text: "Everything is an object", sub: "An object = some data + the operations (methods) that work on it." },
       { type: "table", head: ["Value", "Its class (type)", "A method on it", "Result"], code: [0, 2], rows: [
@@ -193,7 +193,7 @@
       `<p><b>type = class</b>, and <b>value = instance</b> (an object of that class). <code>int('5')</code> already was “make an object of class int”. Now you write your own classes.</p>`,
 
       { type: "h", text: "A class is a blueprint" },
-      { type: "code", caption: "The course's example (L4 p14)", code: `
+      { type: "code", caption: "The course's example", code: `
           class SocialMediaPost:                         # class name: CapitalWords
               def __init__(self, author, content):       # runs once for every new object
                   self.author = author                   # attribute, from an argument
@@ -430,7 +430,7 @@
     title: "self & methods",
     summary: "<code>self</code> is the object left of the dot. <code>post1.like()</code> is really <code>SocialMediaPost.like(post1)</code>.",
     exam: ["Q1 methods"],
-    sources: "L4 p14–15 · L5 p3 · NB cell 133",
+    sources: "NB cell 133",
     blocks: [
       { type: "h", text: "self is the object left of the dot" },
       { type: "table", head: ["You write", "Python runs", "So self is"], code: [0, 1], rows: [
@@ -493,7 +493,7 @@
         },
       },
 
-      { type: "h", text: "self is just a name", sub: "The banana demo (L5 p3)" },
+      { type: "h", text: "self is just a name", sub: "The banana demo" },
       `<p>Python passes the object as the <b>first</b> argument, whatever you call it. <code>self</code> is only the custom everybody follows. Always use <code>self</code>.</p>`,
       {
         type: "tryit",
@@ -897,7 +897,7 @@
     title: "Class vs instance variables",
     summary: "A class variable lives on the blueprint (one shared copy); <code>self.x</code> lives on each object. The unique-ID counter, <code>isinstance</code> and <code>@property</code>.",
     exam: ["Q1 unique ID"],
-    sources: "NB §20, cells 146–151 · L5 p42–43",
+    sources: "NB §20, cells 146–151",
     blocks: [
       { type: "h", text: "Two kinds of variables" },
       { type: "table", head: ["", "Class variable", "Instance variable"], rows: [
@@ -1182,7 +1182,7 @@
     title: "Inheritance & super()",
     summary: "A subclass gets everything from its parent, then adds or replaces. Python finds a method by searching upwards. <code>super().__init__</code> lets the parent set up its part.",
     exam: ["Q1 Food → Snacks, Beverages"],
-    sources: "L4 p18–22 · NB §19, cells 138–141 · L5 p4, p42",
+    sources: "NB §19, cells 138–141",
     blocks: [
       { type: "h", text: "A subclass is a special kind of its parent" },
       { type: "code", code: `
@@ -1437,10 +1437,10 @@
     title: "Abstract methods & polymorphism",
     summary: "An abstract method is an empty slot every subclass must fill. One call, many behaviours (polymorphism). Plus operator overloading and the <code>random</code> tools Q1 needs.",
     exam: ["Q1 abstract category method"],
-    sources: "L4 p24 · NB §19.2, §29 · L5 p10",
+    sources: "NB §19.2, §29",
     blocks: [
       { type: "h", text: "Abstract method: a slot the children must fill" },
-      { type: "code", caption: "L4 p24 / NB cell 143", code: `
+      { type: "code", caption: "NB cell 143", code: `
           from abc import ABC, abstractmethod      # 1. import the two tools
 
           class Shape(ABC):                        # 2. the parent inherits from ABC
@@ -1752,7 +1752,7 @@
     title: "Exam Q1 drill: Food",
     summary: "Last year's Q1, built part by part: an abstract <code>Food</code>, <code>Snacks</code> and <code>Beverages</code>, a unique ID, random calories from a method, 200 objects each.",
     exam: ["Q1 (whole question)"],
-    sources: "Exam w25 Q1 · L4 p24 · Ex4 Q7",
+    sources: "Exam w25 Q1 · Ex4 Q7",
     blocks: [
       { type: "callout", kind: "exam", title: "Q1, word for word", html: "<p>Write a Python code snippet that models food items using object-oriented principles.</p><ol><li>Define a parent class <b>Food</b>, and two subclasses: <b>Snacks</b> and <b>Beverages</b>.</li><li>Each instance must have: a <b>unique ID</b>, and a <b>calorie count assigned through a method</b> that randomly generates a value in the range 50–300.</li><li>Include an <b>abstract method</b> in the parent class that assigns a category/type to each instance. For Snacks: randomly choose between “vegan” or “non-vegan”. For Beverages: randomly choose between “normal”, “diet”, or “zero”.</li><li>Create <b>200 instances of each subclass</b> and print a small selection of them to demonstrate that the classes and their behaviors function correctly.</li></ol>" },
       { type: "h", text: "From the spec to code", sub: "Every phrase maps to one thing you already know." },
@@ -2018,7 +2018,7 @@
     title: "Errors & tracebacks",
     summary: "The Museum of Errors (won't start / crashes / wrong answer), the common error types, and how to read a traceback from the bottom up.",
     exam: ["Q2 syntax errors", "Q4 runtime + logic errors"],
-    sources: "L5 p5–16, 26–29 · NB §21, 23",
+    sources: "NB §21, 23",
     blocks: [
       { type: "h", text: "Loud and silent failures" },
       { type: "table", head: ["", "Loud", "Silent"], rows: [
@@ -2063,7 +2063,7 @@
 
       { type: "h", text: "Reading a traceback", sub: "Click the parts. Start at the bottom." },
       { type: "widget", render: tracebackWidget },
-      { type: "table", caption: "The routine (L5 p26–29)", head: ["Step", "Do this"], rows: [
+      { type: "table", caption: "The routine", head: ["Step", "Do this"], rows: [
         ["1. Read the last line", "error type + message: <i>what</i> went wrong"],
         ["2. Find the last <code>File … line N</code>", "<i>where</i> it crashed (in your code, not inside Python's)"],
         ["3. Walk up", "which calls led there"],
@@ -2283,7 +2283,7 @@
     title: "try/except, raise, assert & testing",
     summary: "Catch errors with <code>try/except</code>, refuse bad input with <code>raise</code>, check your own code with <code>assert</code>, and pick tests that find bugs (partitions and boundaries).",
     exam: ["Q4 runtime errors", "Ex5 Q12–Q14"],
-    sources: "L5 p17–25, 34–40 · NB §22, 25",
+    sources: "NB §22, 25",
     blocks: [
       { type: "h", text: "try / except: catch an error and carry on" },
       { type: "table", head: ["Block", "Runs when", "Tiny example"], code: [2], rows: [

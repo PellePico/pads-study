@@ -156,7 +156,7 @@
     title: "Lists & comprehensions",
     summary: "A list is a row of numbered boxes you can change. Grow and shrink it, use the built-ins, and build lists in one line.",
     exam: ["Q1 list of objects", "Q3 low_stock_queue"],
-    sources: "NB §13; L3 p5–9",
+    sources: "NB §13",
     blocks: [
       { type: "h", text: "A list: numbered boxes in square brackets" },
       `<p>Indexing and slicing work exactly like strings. Items can be any type, even mixed.</p>`,
@@ -387,7 +387,7 @@
     id: "tuples",
     title: "Tuples & unpacking",
     summary: "Tuples are lists that cannot change. Unpack them into names, and walk lists with <code>enumerate()</code> and <code>zip()</code>.",
-    sources: "NB §13.6, 14; L3 p10",
+    sources: "NB §13.6, 14",
     blocks: [
       { type: "h", text: "A tuple: round brackets, fixed for ever" },
       `<p>Indexing and slicing work like a list. But a tuple is <b>immutable</b>, like a string: no <code>.append()</code>, no changing an item.</p>`,
@@ -638,7 +638,7 @@
     title: "Dicts & counting",
     summary: "Store values under keys, look them up, and count things with <code>d[k] = d.get(k, 0) + 1</code>.",
     exam: ["A1 count by year"],
-    sources: "NB §15; L3 p11–14",
+    sources: "NB §15",
     blocks: [
       { type: "h", text: "A dictionary: values stored under keys" },
       `<p>Curly brackets, <code>key: value</code> pairs. You look things up by <b>key</b>, never by position.</p>`,
@@ -927,7 +927,7 @@
     title: "Sets",
     summary: "A bag of items with no repeats and no order. Fast <code>in</code>, and union / intersection / difference.",
     exam: ["Q6 visited"],
-    sources: "NB §26; L3 p36",
+    sources: "NB §26",
     blocks: [
       { type: "h", text: "A set: no repeats, no order" },
       { type: "table", head: ["Python", "Result", "Why"], code: [0], rows: [
@@ -1212,7 +1212,7 @@
     id: "copies",
     title: "Names, aliasing & copies",
     summary: "<code>c = a</code> makes a second name, not a copy. Mutate vs rebind, shallow vs deep copies, and two traps.",
-    sources: "NB §28; L4 p16",
+    sources: "NB §28",
     blocks: [
       { type: "h", text: "Same contents or same box?" },
       { type: "table", head: ["Python", "Asks", "a = [1, 2, 3]; b = [1, 2, 3]"], code: [0], rows: [
@@ -1527,7 +1527,7 @@
     title: "Files & CSV",
     summary: "Read and write text files with modes <code>'r'</code>, <code>'w'</code>, <code>'a'</code>. Cut CSV lines by hand, then with the <code>csv</code> module and <code>DictReader</code>.",
     exam: ["A1 load_tweets"],
-    sources: "NB §16; L3 p15–22",
+    sources: "NB §16",
     blocks: [
       { type: "callout", kind: "exam", title: "Exam weight: low, Assignment weight: high", html: "<p>Files were not in last year's exam, but Assignment 1 starts with <code>load_tweets(filename)</code>, and Exercise 3 Q5–Q6 are file tasks.</p>" },
       { type: "h", text: "Open, use, close: the with block" },

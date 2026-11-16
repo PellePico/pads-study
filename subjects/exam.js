@@ -422,7 +422,7 @@
     title: "Q1 · Classes",
     summary: "Write <code>Food</code> with subclasses <code>Snacks</code> and <code>Beverages</code>: unique ID, random calories, an abstract category method, 200 objects each.",
     exam: ["Q1 write code"],
-    sources: "Exam w25 Q1; L4 p18–25; NB §20",
+    sources: "Exam w25 Q1; NB §20",
     blocks: [
       { type: "h", text: "The task in plain words" },
       { type: "table", head: ["The paper asks for…", "In Python that is…"], rows: [
@@ -631,7 +631,7 @@
     title: "Q2 · Syntax errors",
     summary: "List every syntax error in <code>has_stock</code> <b>with its line number</b>, then write the corrected code.",
     exam: ["Q2 find + fix"],
-    sources: "Exam w25 Q2; L5 p6–7",
+    sources: "Exam w25 Q2",
     blocks: [
       { type: "h", text: "The task in plain words" },
       `<p>You get 11 lines of code that will not even start. Write down <b>each</b> syntax error with its <b>line number</b>, then write the whole corrected cell below. The function should return True if the item at <code>item_index</code> has stock above 0.</p>`,
@@ -825,7 +825,7 @@
     title: "Q3 · Inventory function",
     summary: "Write <code>process_inventory</code>: sell one if there is stock, otherwise put the item's index in <code>low_stock_queue</code>.",
     exam: ["Q3 write code"],
-    sources: "Exam w25 Q3; L7 p20–22",
+    sources: "Exam w25 Q3",
     blocks: [
       { type: "h", text: "The task in plain words" },
       { type: "table", head: ["If…", "then…", "and return"], rows: [
@@ -1000,7 +1000,7 @@
     title: "Q4 · Debug and explain",
     summary: "Find the syntax error and the runtime/logic problems in <code>process_payment</code>, and explain each one in 3–4 sentences.",
     exam: ["Q4 find + explain"],
-    sources: "Exam w25 Q4; L5 p5–15",
+    sources: "Exam w25 Q4",
     blocks: [
       { type: "h", text: "The task in plain words" },
       `<p>The code should: <b>show the price → take the coins → decide if payment worked → go on, or refund and stop</b>. It has at least one syntax error and at least one logical or runtime error. List them all and explain each one (max 3–4 sentences).</p>`,
@@ -1197,7 +1197,7 @@
     title: "Q5 · NumPy totals",
     summary: "Return the indices of machines whose total usage is above a threshold, using NumPy only (<code>np.sum</code> with <code>axis=1</code>, a comparison, <code>np.where</code>).",
     exam: ["Q5 write code"],
-    sources: "Exam w25 Q5; L8 p3–8",
+    sources: "Exam w25 Q5",
     blocks: [
       { type: "h", text: "The task in plain words" },
       `<p><code>usage_matrix</code> has one <b>row per machine</b> and one <b>column per item</b>. Add up each row. Give back the <b>row numbers</b> (indices) whose total is <b>greater than</b> <code>usage_threshold</code> (25). Use only NumPy: no <code>for</code> loop. Then show an example call and print the result.</p>`,
@@ -1346,7 +1346,7 @@
     title: "Q6 · DFS route",
     summary: "Write <code>dfs_route(adj_matrix, start)</code> on a tree of machines given as an adjacency matrix, and explain DFS as a restocking plan in 4–5 sentences.",
     exam: ["Q6 write + explain"],
-    sources: "Exam w25 Q6; L9 p40–46; L7 p17–19",
+    sources: "Exam w25 Q6",
     blocks: [
       { type: "h", text: "The task in plain words" },
       `<p>The machines form a <b>tree</b> (no loops; one path between any two machines). It is given as an <b>adjacency matrix</b>. Starting from <code>start</code>, return a <b>list of machine numbers in the order DFS visits them</b>. Iterative or recursive, your choice. Then explain in 4–5 sentences why “follow one branch to the end, then backtrack” is a restocking strategy.</p>`,
@@ -1876,7 +1876,7 @@
   PADS.registerSubject({
     id: "exam",
     title: "Exam",
-    order: 8,
+    order: 9,
     blurb: "How the exam works, a drill page for each of last year's six questions, and a fresh two-part mock exam you can check in the browser.",
     covers: ["Format, hand-in and time plan", "Q1–Q6 drills: task, plan, worked solution, checked practice", "Mock exam: new story, same six question types"],
     exam: [
