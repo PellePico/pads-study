@@ -782,7 +782,7 @@
     exam: ["Q4 np.sum", "Q5 row totals"],
     sources: "L8 p7; Ex8 M1; Exam Q5",
     blocks: [
-      { type: "callout", kind: "exam", title: "Exam Q5 needs axis=, and the lectures never taught it", html: "<p>Q5 gave a <code>usage_matrix</code> (machines × items) and a threshold of 25, and asked for the machines whose <b>row total</b> exceeds it. That needs <code>np.sum(usage_matrix, axis=1)</code>, then a mask, then <code>np.where</code>. The answer is <code>[1 3]</code>. This page teaches each piece.</p>" },
+      { type: "callout", kind: "exam", title: "Exam Q5 needs axis=, and the course never taught it", html: "<p>Q5 gave a <code>usage_matrix</code> (machines × items) and a threshold of 25, and asked for the machines whose <b>row total</b> exceeds it. That needs <code>np.sum(usage_matrix, axis=1)</code>, then a mask, then <code>np.where</code>. The answer is <code>[1 3]</code>. This page teaches each piece.</p>" },
       { type: "h", text: "Summaries of one array" },
       `<p>Each function squeezes many values into <b>one</b> number. Drag the values and watch the markers.</p>`,
       { type: "widget", render: statsWidget },
@@ -2106,11 +2106,11 @@
   PADS.registerSubject({
     id: "datasci",
     title: "NumPy, Pandas & plots",
-    order: 7,
+    order: 5,
     blurb: "NumPy arrays, masks and <code>axis=</code> (exam Q5), Pandas tables (filter, <code>loc</code>/<code>iloc</code>, missing data, <code>groupby</code>, merge, melt), and choosing and reading plots.",
     covers: ["NumPy: shape, indexing, masks, <code>np.where</code>", "<code>axis=1</code> row totals (exam Q5)", "Pandas: filter, loc/iloc, NaN, groupby, merge, melt", "Matplotlib anatomy, which plot when, Seaborn <code>hue</code>"],
     exam: [
-      "<b>Q5</b>: row totals with <code>np.sum(usage_matrix, axis=1)</code>, a mask, then <code>np.where(...)[0]</code> → <code>[1 3]</code>. <code>axis=</code> was never taught in the lectures, so start with the <b>axis= and summaries</b> page.",
+      "<b>Q5</b>: row totals with <code>np.sum(usage_matrix, axis=1)</code>, a mask, then <code>np.where(...)[0]</code> → <code>[1 3]</code>. <code>axis=</code> was never taught in the course, so start with the <b>axis= and summaries</b> page.",
       "<b>Q2–Q4</b>: index a NumPy array (<code>stock[item_index]</code>) and total it with <code>np.sum</code>.",
       "Pandas and plotting were not in last year's exam (it imported only NumPy), but they are Exercise 8 course content.",
     ],

@@ -1339,7 +1339,7 @@
                 a[j + 1] = key
             return a, count`,
       count: a0 => { const a = a0.slice(); let c = 0; for (let i = 1; i < a.length; i++) { const key = a[i]; let j = i - 1; while (j >= 0) { c++; if (a[j] > key) { a[j + 1] = a[j]; j--; } else break; } a[j + 1] = key; } return c; },
-      verdict: ["Best case: each card is already in place, 1 comparison each: n − 1 in total: <b>O(n)</b>.", "Nearly sorted: only a few cards slide. Still about n: <b>O(n)</b>. This is L9 p48, question 2.", "Average case: about n²/4. Drop the ¼: <b>O(n²)</b>.", "Worst case: card i slides past all i cards before it. 1 + 2 + … + (n − 1) = n(n − 1)/2: <b>O(n²)</b>."] },
+      verdict: ["Best case: each card is already in place, 1 comparison each: n − 1 in total: <b>O(n)</b>.", "Nearly sorted: only a few cards slide. Still about n: <b>O(n)</b>.", "Average case: about n²/4. Drop the ¼: <b>O(n²)</b>.", "Worst case: card i slides past all i cards before it. 1 + 2 + … + (n − 1) = n(n − 1)/2: <b>O(n²)</b>."] },
     { name: "Bubble sort", kind: "sort",
       code: `
         def bubble_sort(nums):
@@ -1485,7 +1485,7 @@
       { type: "table", caption: "How many calls? (counted in Python)", head: ["n", "naive fib calls", "memo fib calls"], num: [0, 1, 2], rows: [
         ["5", "15", "9"], ["10", "177", "19"], ["15", "1,973", "29"], ["20", "21,891", "39"], ["25", "242,785", "49"],
       ] },
-      `<p>Naive: +5 to n gives about ×11 the calls, which explodes. Memo: +5 to n gives +10 calls, a straight line: O(n). (The real naive factor is about ×1.6 per +1. The slides write O(2ⁿ), an upper bound: still exponential.)</p>`,
+      `<p>Naive: +5 to n gives about ×11 the calls, which explodes. Memo: +5 to n gives +10 calls, a straight line: O(n). (The real naive factor is about ×1.6 per +1. The course writes O(2ⁿ), an upper bound: still exponential.)</p>`,
       {
         type: "tryit",
         title: "Count the calls yourself",
@@ -2639,6 +2639,382 @@
   };
 
   /* ================================================================
+     TOPIC: Exercise 9 walkthrough (traffic feed: easy, medium, hard)
+     ================================================================ */
+  const EX9_SORTS = `
+    def bubble_sort(items, key=lambda x: x):       # neighbours swap; early exit
+        out = list(items)                          # copy: the input stays unchanged
+        for end in range(len(out) - 1):
+            swapped = False
+            for i in range(len(out) - 1):
+                if key(out[i]) > key(out[i + 1]):
+                    out[i], out[i + 1] = out[i + 1], out[i]
+                    swapped = True
+            if not swapped:                        # a pass with no swaps: done
+                break
+        return out
+
+    def selection_sort(items, key=lambda x: x):    # swap the smallest of the rest to the front
+        out = list(items)
+        for i in range(len(out) - 1):
+            min_idx = i
+            for j in range(i + 1, len(out)):
+                if key(out[j]) < key(out[min_idx]):
+                    min_idx = j
+            out[i], out[min_idx] = out[min_idx], out[i]
+        return out
+
+    def insertion_sort(items, key=lambda x: x):    # hold a card, slide bigger ones right
+        out = list(items)
+        for i in range(1, len(out)):
+            current = out[i]
+            j = i - 1
+            while j >= 0 and key(out[j]) > key(current):
+                out[j + 1] = out[j]
+                j = j - 1
+            out[j + 1] = current
+        return out
+
+    def merge(left, right, key=lambda x: x):       # glue two sorted lists
+        result = []
+        i = j = 0
+        while i < len(left) and j < len(right):
+            if key(left[i]) <= key(right[j]):      # <= : ties take the left = stable
+                result.append(left[i]); i += 1
+            else:
+                result.append(right[j]); j += 1
+        return result + left[i:] + right[j:]
+
+    def merge_sort(items, key=lambda x: x):
+        if len(items) <= 1:                        # base case
+            return list(items)
+        mid = len(items) // 2
+        return merge(merge_sort(items[:mid], key), merge_sort(items[mid:], key), key)
+
+    def quick_sort(items, key=lambda x: x):        # middle pivot, 3-way lists
+        if len(items) <= 1:                        # base case
+            return list(items)
+        pivot = key(items[len(items) // 2])
+        less = [x for x in items if key(x) < pivot]
+        equal = [x for x in items if key(x) == pivot]
+        greater = [x for x in items if key(x) > pivot]
+        return quick_sort(less, key) + equal + quick_sort(greater, key)`;
+  const EX9_DATA = `
+    import random
+    RNG = random.Random(42)                        # fixed seed: same numbers every run
+    VOLUMES = [RNG.randint(10, 95) for _ in range(16)]
+    SENSORS = [(f"S{i:02d}", volume) for i, volume in enumerate(VOLUMES)]`;
+  const ex9Code = (...parts) => parts.map(p => PADS.dedent(p)).join("\n\n");   // glue code pieces for one Try-it
+
+  const ex9 = {
+    id: "ex9",
+    title: "Exercise 9 walkthrough",
+    summary: "The traffic-feed exercise, all of it: clean and trace (easy), five sorts on the same words (medium), then the <b>hard part</b>: rank sensors, a green-light schedule, a fair benchmark and a written recommendation.",
+    sources: "Ex9 E1–E4, M1–M4, H1–H4",
+    blocks: [
+      { type: "callout", kind: "note", title: "How to use this page", html: "<p>Each part gives the task in one line, then a Try-it with a <b>Hint</b> and a <b>model answer</b>. Try first. The sorts themselves are explained on <a href=\"#algorithms/sorting\">Sorting</a> and stepped line by line on the <a href=\"#sortviz\">Sorting visualizer</a>.</p>" },
+      { type: "table", caption: "The exercise at a glance", head: ["Part", "Task", "Below"], rows: [
+        ["E1–E4", "clean letters, bubble + selection with <code>key=</code>, state after 4 passes, invariants", "Easy"],
+        ["M1–M4", "split words, insertion + merge + quick, all five agree, Big-O table", "Medium"],
+        ["<b>H1</b>", "<code>priority_key</code>: busiest first, ties by ID; all five sorts agree", "Hard"],
+        ["<b>H2</b>", "<code>light_duration</code> and a schedule; why this is not a safe controller", "Hard"],
+        ["<b>H3</b>", "a fair benchmark: same input, several runs, median ms", "Hard"],
+        ["<b>H4</b>", "a 3–5 sentence recommendation", "Hard"],
+      ] },
+      { type: "callout", kind: "rule", title: "The contract every sort follows", html: "<p>Take <code>items</code> and an optional <code>key</code>. <b>Return a new list</b>, ascending by <code>key</code>. Never change <code>items</code>. Same contract → you can check all five against <code>sorted()</code> with one loop.</p>" },
+
+      { type: "h", text: "Easy: clean, sort, trace (E1–E4)" },
+      {
+        type: "tryit",
+        title: "E1 + E3: clean_letters and selection_first_k",
+        task: "Write <code>clean_letters(text)</code>: only letters, lowercase, as a new list. Then <code>selection_first_k(items, k)</code>: the list after exactly <code>k</code> selection passes.",
+        code: `
+          from collections import Counter
+
+          def clean_letters(text):
+              result = []
+              # keep c only if c.isalpha(), lowercased
+              return result
+
+          def selection_first_k(items, k, key=lambda x: x):
+              out = list(items)                    # copy first
+              # k rounds of: find the smallest in out[i:], swap it to position i
+              return out
+
+          ALERT = "CDSCO2402U.LA_E24 (Programming, Algorithms and Data Structures)"
+          letters = clean_letters(ALERT)
+          print(len(letters))                      # 47
+          print(Counter(letters).most_common(3))
+          print(selection_first_k([3, 1, 4, 2], 2))   # [1, 2, 4, 3]`,
+        hint: "Letters: <code>if c.isalpha(): result.append(c.lower())</code>. Selection: <code>for i in range(k):</code>, then <code>min_idx = i</code> and an inner loop <code>for j in range(i + 1, len(out))</code>.",
+        solution: `
+          from collections import Counter
+
+          def clean_letters(text):
+              result = []
+              for c in text:
+                  if c.isalpha():                  # skip digits, spaces, punctuation
+                      result.append(c.lower())
+              return result
+
+          def selection_first_k(items, k, key=lambda x: x):
+              out = list(items)
+              for i in range(k):                   # exactly k rounds
+                  min_idx = i
+                  for j in range(i + 1, len(out)):
+                      if key(out[j]) < key(out[min_idx]):
+                          min_idx = j
+                  out[i], out[min_idx] = out[min_idx], out[i]
+              return out
+
+          ALERT = "CDSCO2402U.LA_E24 (Programming, Algorithms and Data Structures)"
+          letters = clean_letters(ALERT)
+          print(len(letters))                      # 47
+          print(Counter(letters).most_common(3))   # [('a', 6), ('r', 5), ('s', 4)]
+          print(selection_first_k([3, 1, 4, 2], 2))   # [1, 2, 4, 3]`,
+        solutionNote: "After 4 passes on the letters of “Programming, Algorithms and Data Structures” the front is <code>['a', 'a', 'a', 'a', …]</code> and the rest is still messy. A partial state is not the sorted result.",
+      },
+      { type: "table", caption: "E4: the invariant after one pass (on [3, 1, 4, 2])", head: ["Sort", "After each pass", "Tiny example"], rows: [
+        ["Bubble", "the biggest of the rest is at the <b>end</b>, final", "<code>[1, 3, 2, 4]</code>: 4 is done"],
+        ["Selection", "the smallest of the rest is at the <b>front</b>, final", "<code>[1, 3, 4, 2]</code>: 1 is done"],
+      ] },
+      { type: "table", caption: "E4: cost (the output copy is O(n) on top, because of our contract)", head: ["Sort", "Best", "Average", "Worst", "Extra space"], rows: [
+        ["Bubble (early exit)", "O(n)", "O(n²)", "O(n²)", "O(1): <code>swapped</code>, <code>i</code>"],
+        ["Selection", "O(n²)", "O(n²)", "O(n²)", "O(1): <code>min_idx</code>, <code>i</code>, <code>j</code>"],
+      ] },
+
+      { type: "h", text: "Medium: five sorts, one answer (M1–M4)" },
+      {
+        type: "tryit",
+        title: "M1 + M3: extract_words, then all five must agree",
+        task: "Write <code>extract_words(text)</code>: lowercase words in order, any non-letter splits words, no sorting. Then run the check loop.",
+        code: ex9Code(EX9_SORTS, `
+          def extract_words(text):
+              result = []
+              word = ""                            # the word being built
+              # letter: add it; non-letter: save the word (if any) and start again
+              return result
+
+          POEM = ("OF Mans First Disobedience, and the Fruit Of that Forbidden Tree, "
+                  "whose mortal tast Brought Death into the World, and all our woe")
+          words = extract_words(POEM)
+          print(len(words))                        # 23
+
+          expected = sorted(words, key=str.casefold)
+          for sort_fn in [bubble_sort, selection_sort, insertion_sort, merge_sort, quick_sort]:
+              assert sort_fn(words, key=str.casefold) == expected, sort_fn.__name__
+          print(expected[:15])`),
+        hint: "Do not forget the last word: after the loop, <code>if word != \"\": result.append(word)</code>. Without it you get 22 words (no “woe”).",
+        solution: ex9Code(EX9_SORTS, `
+          def extract_words(text):
+              result = []
+              word = ""
+              for c in text:
+                  if c.isalpha():
+                      word = word + c.lower()      # build the word
+                  else:
+                      if word != "":               # a word just ended
+                          result.append(word)
+                          word = ""
+              if word != "":                       # the text ended mid-word ("woe")
+                  result.append(word)
+              return result
+
+          POEM = ("OF Mans First Disobedience, and the Fruit Of that Forbidden Tree, "
+                  "whose mortal tast Brought Death into the World, and all our woe")
+          words = extract_words(POEM)
+          print(len(words))                        # 23
+
+          expected = sorted(words, key=str.casefold)
+          for sort_fn in [bubble_sort, selection_sort, insertion_sort, merge_sort, quick_sort]:
+              assert sort_fn(words, key=str.casefold) == expected, sort_fn.__name__
+          print(expected[:15])`),
+        expectOutput: "23\n['all', 'and', 'and', 'brought', 'death', 'disobedience', 'first', 'forbidden', 'fruit', 'into', 'mans', 'mortal', 'of', 'of', 'our']",
+      },
+      { type: "table", caption: "M3: stable or not? Base case?", head: ["Sort", "Stable?", "Why"], rows: [
+        ["Bubble", "yes", "swaps only on strict <code>&gt;</code>"],
+        ["Selection", "<b>no</b>", "the long swap: <code>[2a, 2b, 1]</code> → <code>[1, 2b, 2a]</code>"],
+        ["Insertion", "yes", "slides only past strictly bigger cards"],
+        ["Merge", "yes", "<code>&lt;=</code> takes from the left pile on a tie"],
+        ["Quick (ours)", "yes", "<code>less/equal/greater</code> are built left to right. In-place quick sort is <b>not</b> stable"],
+      ] },
+      `<p>Base case for merge and quick: <code>if len(items) &lt;= 1: return list(items)</code>. Every call works on a shorter list, so it always gets there. M4's Big-O table is on <a href="#algorithms/big-o-drill">Big-O: cheat sheet & drill</a> and <a href="#sortviz/bigo">Sorting visualizer → Big-O</a>.</p>`,
+
+      { type: "h", text: "Hard H1: rank the sensors", sub: "Highest volume first, ties by sensor ID ascending. Every sort must give the same answer." },
+      { type: "table", caption: "The 16 sensors (seed 42)", head: ["", "Sensors"], code: [1], rows: [
+        ["data", "S00 91, S01 24, S02 13, S03 45, S04 41, S05 38, S06 27, S07 23, S08 79, S09 21, S10 85, S11 64, S12 14, S13 13, S14 21, S15 37"],
+        ["ties", "S09 and S14 both 21; S02 and S13 both 13"],
+      ] },
+      { type: "callout", kind: "rule", title: "priority_key = lambda r: (-r[1], r[0])", html: "<p><code>('S09', 21)</code> → <code>(-21, 'S09')</code>. Ascending on <code>-volume</code> puts 91 first. On a tie, <code>'S09' &lt; 'S14'</code> decides. See what Python compares in the <a href=\"#algorithms/sorting\">key widget on Sorting</a>.</p>" },
+      {
+        type: "tryit",
+        title: "H1: priority_key and the five-way check",
+        task: "Write <code>priority_key</code>. Run it: it must print <code>All 5 match!</code> and then the ranking.",
+        code: ex9Code(EX9_DATA, EX9_SORTS, `
+          def priority_key(record):
+              pass                                 # return a tuple: busiest first, ties by ID
+
+          expected = sorted(SENSORS, key=priority_key)    # the built-in is the reference
+          for sort_fn in [bubble_sort, selection_sort, insertion_sort, merge_sort, quick_sort]:
+              assert sort_fn(SENSORS, key=priority_key) == expected, sort_fn.__name__
+          print("All 5 match!")
+          print(expected[:4], "...", expected[-4:])`),
+        hint: "Negate the number so “bigger” sorts first, keep the ID as is: <code>return (-record[1], record[0])</code>.",
+        solution: ex9Code(EX9_DATA, EX9_SORTS, `
+          def priority_key(record):
+              return (-record[1], record[0])       # ('S02', 13) -> (-13, 'S02')
+
+          expected = sorted(SENSORS, key=priority_key)
+          for sort_fn in [bubble_sort, selection_sort, insertion_sort, merge_sort, quick_sort]:
+              assert sort_fn(SENSORS, key=priority_key) == expected, sort_fn.__name__
+          print("All 5 match!")
+          print(expected[:4], "...", expected[-4:])`),
+        expectOutput: "All 5 match!\n[('S00', 91), ('S10', 85), ('S08', 79), ('S11', 64)] ... [('S14', 21), ('S12', 14), ('S02', 13), ('S13', 13)]",
+      },
+      { type: "table", caption: "Why not just reverse? Look at the ties", head: ["Way", "The tail of the ranking", "Right?"], code: [1], rows: [
+        ["sorted(SENSORS, key=priority_key)", "... ('S09', 21), ('S14', 21), ('S12', 14), ('S02', 13), ('S13', 13)", "✓"],
+        ["sorted(SENSORS, key=lambda r: (r[1], r[0]))[::-1]", "... ('S14', 21), ('S09', 21), ('S12', 14), ('S13', 13), ('S02', 13)", "✗ IDs flipped"],
+      ] },
+      { type: "callout", kind: "tip", title: "Stability stops mattering here", html: "<p>The key <code>(-volume, id)</code> never has two equal keys (IDs are unique). So even selection sort, which is not stable, gives the same order. Stability only matters when you leave ties equal.</p>" },
+
+      { type: "h", text: "Hard H2: a green-light schedule", sub: "≤ 30 → 15 s, ≤ 60 → 30 s, otherwise 45 s. A teaching simulation, not a real controller." },
+      {
+        type: "tryit",
+        title: "H2: light_duration and the schedule",
+        task: "Write <code>light_duration(volume)</code>, then build <code>(sensor_id, volume, green_seconds)</code> for the ranked sensors.",
+        code: ex9Code(EX9_DATA, `
+          def priority_key(record):
+              return (-record[1], record[0])
+
+          def light_duration(volume):
+              pass                                 # 15, 30 or 45
+
+          ranked = sorted(SENSORS, key=priority_key)
+          schedule = []
+          # one tuple per sensor: (sensor_id, volume, light_duration(volume))
+
+          for row in schedule[:5]:
+              print(row)`),
+        hint: "Check the small limit first: <code>if volume &lt;= 30</code>, then <code>elif volume &lt;= 60</code>, then <code>else</code>. For the schedule: <code>for sensor_id, volume in ranked:</code>.",
+        solution: ex9Code(EX9_DATA, `
+          def priority_key(record):
+              return (-record[1], record[0])
+
+          def light_duration(volume):
+              if volume <= 30:                     # quiet road
+                  return 15
+              elif volume <= 60:                   # medium (31-60)
+                  return 30
+              else:                                # busy (over 60)
+                  return 45
+
+          ranked = sorted(SENSORS, key=priority_key)
+          schedule = []
+          for sensor_id, volume in ranked:         # ('S00', 91) -> sensor_id, volume
+              schedule.append((sensor_id, volume, light_duration(volume)))
+
+          for row in schedule[:5]:
+              print(row)`),
+        expectOutput: "('S00', 91, 45)\n('S10', 85, 45)\n('S08', 79, 45)\n('S11', 64, 45)\n('S03', 45, 30)",
+      },
+      { type: "callout", kind: "warn", title: "Sorting is not a traffic light", html: "<p>The schedule only says who is busiest and how long their green <i>could</i> be. A safe controller also needs yellow and red phases, a rule that crossing roads are never green together, pedestrian signals, minimum and maximum times, and live updates (this list is sorted once).</p>" },
+
+      { type: "h", text: "Hard H3: evidence, not guesses", sub: "Same input for every sort, several runs, report the median." },
+      { type: "table", caption: "Your benchmark (median ms; times depend on the computer)", head: ["Sort", "n = 50 → 100 → 200 → 400", "Reads as"], rows: [
+        ["bubble, selection, insertion", "about <b>×4</b> per doubling", "O(n²)"],
+        ["merge, quick, <code>sorted()</code>", "about <b>×2.3</b> per doubling", "O(n log n)"],
+        ["<code>sorted()</code> at n = 400", "0.11 ms vs 38 ms for bubble", "same Big-O as merge, but written in C"],
+      ] },
+      {
+        type: "tryit",
+        title: "H3: a fair benchmark",
+        task: "Run it (it takes a few seconds in the browser). Read the ×-column: which sorts go about ×4 and which about ×2?",
+        code: ex9Code(EX9_SORTS, `
+          import random
+          from time import perf_counter
+          from statistics import median
+
+          def priority_key(record):
+              return (-record[1], record[0])
+
+          def make_records(n):                     # same n sensors every time (seed 42)
+              rng = random.Random(42)
+              return [(f"S{i:02d}", rng.randint(10, 95)) for i in range(n)]
+
+          for sort_fn in [bubble_sort, insertion_sort, merge_sort, quick_sort, sorted]:
+              previous = None
+              for n in [100, 200, 400]:
+                  records = make_records(n)        # identical input for every sort
+                  times = []
+                  for _ in range(3):               # several runs, keep the median
+                      start = perf_counter()
+                      sort_fn(records, key=priority_key)   # returns a new list: records stays fresh
+                      times.append((perf_counter() - start) * 1000)
+                  ms = median(times)
+                  ratio = f"x{ms / previous:.1f}" if previous else ""
+                  print(f"{sort_fn.__name__:15} n={n:4}  {ms:7.2f} ms  {ratio}")
+                  previous = ms`),
+      },
+      `<p class="small muted">On a laptop: bubble ×4.6 then ×4.2, insertion ×3.9, merge ×2.2, quick ×2.3–2.6, <code>sorted</code> ×2.1–2.4. Your numbers will differ; the ratios are what to read.</p>`,
+      { type: "callout", kind: "warn", title: "A stopwatch measures time, not memory", html: "<p>Merge sort is fast but makes new lists: O(n) extra. Bubble is slow but needs O(1) extra. The benchmark cannot see that. Memory comes from reading the code (<a href=\"#algorithms/big-o-cases\">Big-O: space</a>).</p>" },
+
+      { type: "h", text: "Hard H4: the recommendation" },
+      { type: "table", caption: "What the 3–5 sentences must cover", head: ["Point", "Your answer in a few words"], rows: [
+        ["(a) time", "quadratic sorts ×4 per doubling; merge/quick/<code>sorted()</code> about ×2.3"],
+        ["(b) extra space", "bubble/selection/insertion O(1); merge O(n); our quick O(n) average (new lists); in-place quick O(log n) for the waiting calls"],
+        ["(c) stability, ties", "the key <code>(-volume, id)</code> breaks every tie, so all five agree"],
+        ["(d) input shape, pivot", "sorted input: bubble/insertion O(n); quick drops to O(n²) if the pivot is always the smallest or biggest"],
+        ["(e) why <code>sorted()</code>", "fastest, stable, O(n log n) worst case, tested, one line"],
+      ] },
+      { type: "mistakes", items: [
+        { title: "Reversing the whole result", wrong: "sorted(SENSORS, key=lambda r: (r[1], r[0]))[::-1]", right: "sorted(SENSORS, key=lambda r: (-r[1], r[0]))", why: "Reversing flips the ID order of ties too: S14 before S09." },
+        { title: "Sorting inside the function you test", wrong: "def bubble_sort(items, key=...):\n    return sorted(items, key=key)", right: "# write the loops yourself;\n# sorted() is only the reference", why: "The rules say no <code>sorted()</code> inside your own sorts." },
+        { title: "Wrong boundary in light_duration", wrong: "if volume < 30:\n    return 15", right: "if volume <= 30:\n    return 15", why: "Volume 30 must give 15 s, not 30 s." },
+        { title: "One run, different inputs", wrong: "records = make_records(n)   # new seed each sort\nt = one timing", right: "# same seed for every sort,\n# 3-5 runs, take the median", why: "Different inputs or one noisy run make the comparison unfair." },
+        { title: "Benchmark as memory proof", wrong: "\"merge was fast, so it uses little memory\"", right: "\"merge needs O(n) extra: it builds new lists\"", why: "Time and memory are separate questions." },
+      ] },
+    ],
+    quiz: [
+      { type: "mc", q: "H1. Which key gives highest volume first and ties by ID ascending?", options: ["<code>lambda r: (r[1], r[0])</code>", "<code>lambda r: (-r[1], r[0])</code>", "<code>lambda r: (-r[1], -r[0])</code>", "<code>lambda r: r[1]</code> with <code>[::-1]</code>"], answer: 1,
+        wrong: { 0: "That is lowest volume first.", 2: "You cannot negate a string: TypeError.", 3: "Reversing flips the tie order too." },
+        hint: "Make big numbers small, keep the ID as it is.", explain: "<code>(-volume, id)</code>: −91 is the smallest, so 91 comes first; equal volumes fall back to the ID, A→Z." },
+      { type: "predict", q: "H1. What does this print?", code: "recs = [('S14', 21), ('S09', 21), ('S12', 14)]\nprint(sorted(recs, key=lambda r: (-r[1], r[0]))[0])", answer: "('S09', 21)",
+        hint: "Two records have 21. Which ID is smaller?", explain: "Both 21s become −21; then <code>'S09' &lt; 'S14'</code>." },
+      { type: "write", q: "H2. Write <code>light_duration(volume)</code>: ≤ 30 → 15, ≤ 60 → 30, otherwise 45.",
+        starter: `
+          def light_duration(volume):
+              pass
+
+          print(light_duration(31))   # 30`,
+        checks: [["light_duration(30)", "15"], ["light_duration(31)", "30"], ["light_duration(60)", "30"], ["light_duration(61)", "45"], ["light_duration(10)", "15"]],
+        solution: `
+          def light_duration(volume):
+              if volume <= 30:            # 30 itself is still quiet
+                  return 15
+              elif volume <= 60:
+                  return 30
+              else:
+                  return 45`,
+        hint: "Test the smallest limit first, with <code>&lt;=</code>.", explain: "The boundaries 30 and 60 belong to the lower group, so use <code>&lt;=</code>." },
+      { type: "mc", q: "H3. Insertion sort took 2.6 ms for 200 sensors. About how long for 400?", options: ["2.6 ms", "5 ms", "10 ms", "40 ms"], answer: 2,
+        hint: "O(n²): double n → ×4.", explain: "2.6 × 4 ≈ 10 ms. The real run gave 10.1 ms." },
+      { type: "mc", q: "H3. Why run each sort several times and take the median?", options: ["To measure memory", "One run can be slowed by other programs; the median ignores the odd slow run", "Because the sorts change the input", "To make the sorts stable"], answer: 1,
+        hint: "What makes one timing noisy?", explain: "The computer does other things too. The median of 3–5 runs is a stable number; a stopwatch never shows memory." },
+      { type: "mc", q: "H4. Which sort uses the most extra memory in this exercise's versions?", options: ["Bubble", "Selection", "Insertion", "Merge"], answer: 3,
+        hint: "Which one builds new lists at every level?", explain: "Merge slices and merges into new lists: O(n) extra. The three simple sorts only use a few variables: O(1)." },
+      { type: "explain", q: "H2. In 2–3 sentences: why does sorting sensor volumes not give a safe green → yellow → red controller?",
+        answer: "<p>Sorting only tells us which sensor is busiest and how long its green could be. It doesn't make a safe traffic light: there's no yellow or red phase, nothing stops two crossing roads from being green at the same time, and the list is sorted once instead of updating as traffic changes. A real controller also needs fixed phase order, pedestrian signals and minimum/maximum times.</p>",
+        points: ["no yellow/red phases", "crossing roads could both be green", "sorted once, not live", "needs phase order, pedestrians, min/max times"],
+        hint: "What does a real traffic light do that a sorted list cannot?" },
+      { type: "explain", q: "H4. Write your 3–5 sentence recommendation: which sort for the traffic feed, and why? Cover time, extra space, ties, input shape and the built-in.",
+        answer: "<p>Pick Python's built-in <code>sorted()</code>: it was the fastest at every size (0.11 ms for 400 sensors vs 38 ms for bubble sort), it's stable, and it's always O(n log n). Theory and measurements match: when n doubles, bubble, selection and insertion take about 4× longer (O(n²)), while merge and <code>sorted()</code> take about 2.3× longer (O(n log n)). Merge is guaranteed O(n log n) but needs O(n) extra memory; quick is usually as fast, but drops to O(n²) if the pivot is always the smallest or biggest item. The key <code>(-volume, id)</code> puts equal-volume sensors in ID order, so even an unstable sort gives the same result, and the benchmark measures time only, not memory.</p>",
+        points: ["recommend sorted(): fastest, stable, O(n log n)", "×4 vs ×2.3 when n doubles", "merge O(n) extra; quick worst O(n²) with a bad pivot", "the key breaks ties", "timing ≠ memory"],
+        hint: "Use the five rows of the H4 table, one sentence each." },
+    ],
+  };
+
+
+  /* ================================================================
      TOPIC 16a: Trees & BST
      ================================================================ */
   // A–G tree from L9 p33
@@ -3252,7 +3628,7 @@
               for neighbour in graph[start]:
                   if neighbour not in visited:
                       dfs(graph, neighbour, visited)
-              return visited`, caption: "The lecture's version uses a dict of lists and a set" },
+              return visited`, caption: "The course version uses a dict of lists and a set" },
 
       {
         type: "tryit",
@@ -3401,12 +3777,12 @@
     title: "Algorithms & data structures",
     order: 4,
     blurb: "Linked lists, stacks and queues, recursion and Big-O, DP and greedy, searching and sorting, trees, and DFS/BFS on an adjacency matrix (exam Q6).",
-    covers: ["Linked lists, stacks, queues", "Recursion (call stack, Fibonacci tree, Hanoi), Big-O: cases, space, recursion trees, a 17-snippet drill", "DP, greedy, Dijkstra", "Binary search, sorting, stability, <code>key=lambda</code>", "Trees, BST, DFS and BFS"],
+    covers: ["Linked lists, stacks, queues", "Recursion (call stack, Fibonacci tree, Hanoi), Big-O: cases, space, recursion trees, a 17-snippet drill", "DP, greedy, Dijkstra", "Binary search, sorting, stability, <code>key=lambda</code>", "Exercise 9 walkthrough: <code>priority_key</code>, green-light schedule, benchmark, recommendation", "Trees, BST, DFS and BFS"],
     exam: [
       "<b>Q6</b>: <code>dfs_route(adj_matrix, start)</code>: DFS on a tree given as an adjacency matrix, iterative (stack) or recursive, plus a 4–5 sentence explanation.",
       "<b>Q3</b>: the queue idea: <code>low_stock_queue.append(item_index)</code>.",
       "The exam says it tests whether you can <i>analyse</i> code: be ready to state a Big-O in a sentence.",
     ],
-    topics: [linkedLists, stacksQueues, recursion, bigO, bigOCases, bigODrill, dpGreedy, searching, sorting, trees, dfsBfs],
+    topics: [linkedLists, stacksQueues, recursion, bigO, bigOCases, bigODrill, dpGreedy, searching, sorting, ex9, trees, dfsBfs],
   });
 })();

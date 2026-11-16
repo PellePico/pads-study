@@ -1,4 +1,4 @@
-/* Lecture 10: the slides (data engineering basics) + Exercise 10 (W46: BFS debugging, DFS easy/medium/hard).
+/* Two subjects: "Data engineering" (lifecycle, formats, storage, APIs, ETL) and "Tree traversal" (Exercise 10: BFS debugging, DFS easy/medium/hard).
    Built on the public API in AUTHORING.md. The basics of trees, BFS and DFS live in
    #algorithms/trees and #algorithms/dfs-bfs; this subject does NOT repeat them.
    Local helpers that might be promoted later: treeSvg (binary tree with tones, path edges, notes and
@@ -453,7 +453,7 @@
   const withSetup = (code, tail) => PADS.dedent(code) + "\n\n\n" + SETUP + (tail ? "\n\n\n" + PADS.dedent(tail) : "");
 
   /* ================================================================
-     TOPIC 1: What Lecture 10 covers (the slides: data engineering)
+     ETL stepper helpers (used on the ETL page)
      ================================================================ */
   const ETL_ROWS = [["101", "250.50"], ["102", "?"], ["101", "250.50"], ["103", "131.75"]];
   function etlSteps() {
@@ -535,51 +535,43 @@
   const card = (node, note) => h("div", { class: "card tv-flow" }, node, note ? h("p", { class: "small muted", style: "margin:6px 0 0", html: note }) : null);
 
   /* ================================================================
-     TOPIC 1: Overview of Lecture 10
+     TOPIC 1: Data engineering overview
      ================================================================ */
   const lecture = {
     id: "lecture",
-    title: "What Lecture 10 covers",
-    summary: "The slides are <b>Data Engineering Basics I</b> (53 pages). Exercise 10 is about <b>BFS and DFS</b> on a binary tree. This page is the map.",
-    sources: "L10 p1–3; Ex10",
+    title: "Data engineering at a glance",
+    summary: "How data gets from where it is made to a clean table people can trust. Five pages, one per part. This page is the map.",
+    sources: "L10 p1–6, p9",
     blocks: [
-      { type: "h", text: "Two things this week", sub: "The slides and the exercise are about different topics." },
-      { type: "table", caption: "The slides: one page on this site per section", head: ["Slides", "Section", "Learn it on"], rows: [
-        ["p4–16", "What data engineering is, the two lifecycles, how data comes in, quality", "<a href=\"#traversal/de-lifecycle\">Lifecycle & ingestion</a>"],
-        ["p17–27", "CSV, JSON, XML, Parquet, Avro; schema drift; small format mistakes", "<a href=\"#traversal/de-formats\">File formats</a>"],
-        ["p28–36", "Databases, warehouses, lakes, lakehouses; OLTP vs OLAP; NoSQL", "<a href=\"#traversal/de-storage\">Storage</a>"],
-        ["p37–44", "APIs, HTTP, pagination, retries, duplicates", "<a href=\"#traversal/de-apis\">APIs & collection</a>"],
-        ["p45–51", "ETL vs ELT, orchestration, contracts, idempotent loads", "<a href=\"#traversal/de-etl\">ETL pipelines</a>"],
+      { type: "h", text: "The five parts" },
+      { type: "table", head: ["Part", "What it is about", "Learn it on"], rows: [
+        ["1", "What data engineering is, the two lifecycles, how data comes in, quality", "<a href=\"#dataeng/de-lifecycle\">Lifecycle & ingestion</a>"],
+        ["2", "CSV, JSON, XML, Parquet, Avro; schema drift; small format mistakes", "<a href=\"#dataeng/de-formats\">File formats</a>"],
+        ["3", "Databases, warehouses, lakes, lakehouses; OLTP vs OLAP; NoSQL", "<a href=\"#dataeng/de-storage\">Storage</a>"],
+        ["4", "APIs, HTTP, pagination, retries, duplicates", "<a href=\"#dataeng/de-apis\">APIs & collection</a>"],
+        ["5", "ETL vs ELT, orchestration, contracts, idempotent loads", "<a href=\"#dataeng/de-etl\">ETL pipelines</a>"],
       ] },
-      { type: "table", caption: "Exercise 10 (W46)", head: ["Part", "What it is about", "Learn it on"], rows: [
-        ["BFS", "debug a broken BFS", "<a href=\"#traversal/bfs\">BFS step by step</a> · <a href=\"#traversal/bfs-debug\">Debugging BFS</a>"],
-        ["DFS easy", "recursive pre/in/post-order, count nodes", "<a href=\"#traversal/dfs-recursive\">Recursive DFS</a>"],
-        ["DFS medium", "height, root-to-leaf paths, path sums", "<a href=\"#traversal/height-paths\">Height, paths & sums</a>"],
-        ["DFS hard", "DFS without recursion; height + diameter + balance in one pass", "<a href=\"#traversal/iterative-dfs\">Iterative DFS</a> · <a href=\"#traversal/analyze\">One-pass analysis</a>"],
-        ["All TODOs with hints", "", "<a href=\"#traversal/walkthrough\">Exercise 10 walkthrough</a>"],
-      ] },
-      { type: "callout", kind: "note", title: "Already on the site", html: "<p>Tree words, the three DFS orders on the A–G tree and BST insert: <a href=\"#algorithms/trees\">Trees & BST</a>. DFS and BFS on an adjacency matrix (exam Q6): <a href=\"#algorithms/dfs-bfs\">DFS & BFS</a>. Stacks and queues: <a href=\"#algorithms/stacks-queues\">Stacks & queues</a>.</p>" },
 
-      { type: "h", text: "The whole lecture in one picture", sub: "L10 p6, p9" },
+      { type: "h", text: "The whole subject in one picture" },
       () => card(flowSvg(), "An online shop wants <b>daily revenue per product</b>. Data is made (orders), collected, kept, cleaned and summed, then shown. Each page above zooms in on one box."),
-      { type: "table", caption: "What you should be able to do (L10 p3)", head: ["Goal", "Tiny example", "Page"], rows: [
-        ["Trace data from source to use and disposal", "an order: checkout → table → report → deleted after 5 years", "<a href=\"#traversal/de-lifecycle\">Lifecycle</a>"],
-        ["Compare file formats and storage", "CSV for a quick export, Parquet for a big column sum", "<a href=\"#traversal/de-formats\">Formats</a> · <a href=\"#traversal/de-storage\">Storage</a>"],
-        ["Collect data from an API or file safely", "follow every page, drop repeated ids", "<a href=\"#traversal/de-apis\">APIs</a>"],
-        ["Explain and sketch a small ETL pipeline", "read CSV → parse amounts → drop duplicates → write", "<a href=\"#traversal/de-etl\">ETL</a>"],
+      { type: "table", caption: "What you should be able to do", head: ["Goal", "Tiny example", "Page"], rows: [
+        ["Trace data from source to use and disposal", "an order: checkout → table → report → deleted after 5 years", "<a href=\"#dataeng/de-lifecycle\">Lifecycle</a>"],
+        ["Compare file formats and storage", "CSV for a quick export, Parquet for a big column sum", "<a href=\"#dataeng/de-formats\">Formats</a> · <a href=\"#dataeng/de-storage\">Storage</a>"],
+        ["Collect data from an API or file safely", "follow every page, drop repeated ids", "<a href=\"#dataeng/de-apis\">APIs</a>"],
+        ["Explain and sketch a small ETL pipeline", "read CSV → parse amounts → drop duplicates → write", "<a href=\"#dataeng/de-etl\">ETL</a>"],
         ["Judge quality and trade-offs", "a missing amount is not 0; batch is cheaper, streaming is fresher", "all five"],
       ] },
-      { type: "callout", kind: "exam", title: "Exam link", html: "<p>Last year's exam had no data-engineering question; its tree question (Q6, DFS) is what Exercise 10 trains. Still, the Python inside these pages (loop over rows, check, keep or skip; a dict keyed by id) is the same skill as exam Q3–Q5. An explain question on ETL, formats or batch vs streaming is possible.</p>" },
+      { type: "callout", kind: "exam", title: "Exam link", html: "<p>Last year's exam had no data-engineering question. Still, the Python inside these pages (loop over rows, check, keep or skip; a dict keyed by id) is the same skill as exam Q3–Q5. An explain question on ETL, formats or batch vs streaming is possible.</p>" },
     ],
     quiz: [
       { type: "mc", q: "Which job asks “Is the data reliable and ready?”", options: ["Data engineering", "Analytics", "Data science"], answer: 0,
-        hint: "L10 p5: three jobs, three questions.", explain: "Engineering makes the data reliable. Analytics asks what happened; data science asks what may happen next." },
+        hint: "Three jobs, three questions.", explain: "Engineering makes the data reliable. Analytics asks what happened; data science asks what may happen next." },
       { type: "mc", q: "Put the engineering lifecycle in order.", options: ["Ingest → generate → transform → store → serve", "Generate → ingest → store → transform → serve", "Generate → transform → ingest → serve → store"], answer: 1,
-        hint: "Data must be made before it can be collected.", explain: "Generate → ingest → store → transform → serve (L10 p9). Storage supports every step." },
+        hint: "Data must be made before it can be collected.", explain: "Generate → ingest → store → transform → serve. Storage supports every step." },
       { type: "mc", q: "Which page would explain why <code>'250.50' * 2</code> gives <code>'250.50250.50'</code>?", options: ["Storage", "File formats", "APIs"], answer: 1,
-        hint: "Where does the text come from?", explain: "CSV stores everything as text: that is a format question (L10 p18)." },
-      { type: "mc", q: "Exercise 10 is about…", options: ["ETL pipelines", "BFS and DFS on a binary tree", "Parquet files"], answer: 1,
-        hint: "Look at the second table.", explain: "The slides are data engineering; the exercise (W46) is tree traversal." },
+        hint: "Where does the text come from?", explain: "CSV stores everything as text: that is a format question." },
+      { type: "mc", q: "Raw files are loaded into the warehouse first and cleaned there later. Which page covers this?", options: ["Lifecycle & ingestion", "Storage", "ETL pipelines"], answer: 2,
+        hint: "Extract, Load, then Transform.", explain: "That is ELT, on the ETL pipelines page." },
     ],
   };
 
@@ -1594,7 +1586,7 @@
         ["REST API", "HTTP requests", "pagination / rate limits", "request time, cursor"],
         ["Sensor events", "message stream", "out-of-order events", "event id, timestamp"],
       ] },
-      { type: "callout", kind: "note", title: "Upsert", html: "<p>Update the row if the key exists, insert it if not (L10 p44). In Python: <code>table[row[\"id\"]] = row</code>. Demo on <a href=\"#traversal/de-etl\">ETL pipelines</a>.</p>" },
+      { type: "callout", kind: "note", title: "Upsert", html: "<p>Update the row if the key exists, insert it if not (L10 p44). In Python: <code>table[row[\"id\"]] = row</code>. Demo on <a href=\"#dataeng/de-etl\">ETL pipelines</a>.</p>" },
       { type: "mistakes", items: [
         { title: "Only the first page", wrong: "rows = r.json()['items']   # done!", right: "while cursor is not None:\n    ...  # follow 'next'", why: "Page 1 is not the dataset. Follow the pages (L10 p40)." },
         { title: "No timeout", wrong: "requests.get(url)", right: "requests.get(url, timeout=10)", why: "Without it a dead server can hang your job forever." },
@@ -3769,14 +3761,24 @@
 
   PADS.registerSubject({
     id: "traversal",
-    title: "Lecture 10: Data eng. & BFS/DFS",
-    order: 5,
-    blurb: "Lecture 10's slides (data engineering: lifecycle, formats, storage, APIs, ETL) and Exercise 10: debug a BFS, then DFS from easy (recursive orders) to hard (iterative stacks and a one-pass analysis), all on the tree 10 / 5 / 15 / 3 / 7 / 12 / 18.",
-    covers: ["Data engineering: lifecycle, CSV/JSON/Parquet, storage, APIs, ETL", "BFS with a deque, and debugging it (runtime vs logical errors)", "Recursive DFS with <code>result=None</code>, counting, height, paths, path sums", "Iterative DFS for pre/in/post-order; height + diameter + balance in one pass"],
+    title: "Tree traversal: BFS & DFS",
+    order: 7,
+    blurb: "Exercise 10: debug a BFS, then DFS from easy (recursive orders) to hard (iterative stacks and a one-pass analysis), all on the tree 10 / 5 / 15 / 3 / 7 / 12 / 18.",
+    covers: ["BFS with a deque, and debugging it (runtime vs logical errors)", "Recursive DFS with <code>result=None</code>, counting, height, paths, path sums", "Iterative DFS for pre/in/post-order; height + diameter + balance in one pass"],
     exam: [
       "<b>Q6</b>: a DFS that returns a list of visited nodes, iterative (stack) or recursive, plus a short explanation. Exercise 10 is direct practice.",
       "<b>Q2/Q4</b>: find and fix bugs: the BFS debugging part trains exactly this (runtime vs logical).",
     ],
-    topics: [lecture, lifecycle, formats, storage, apis, etl, bfs, bfsDebug, dfsRecursive, heightPaths, iterativeDfs, analyze, walkthrough],
+    topics: [bfs, bfsDebug, dfsRecursive, heightPaths, iterativeDfs, analyze, walkthrough],
+  });
+
+  PADS.registerSubject({
+    id: "dataeng",
+    title: "Data engineering",
+    order: 9,
+    blurb: "How data gets from a source to a clean, trusted table: lifecycle, file formats, storage, APIs and ETL pipelines.",
+    covers: ["Lifecycle, ingestion, batch vs streaming, data quality", "CSV, JSON, XML, Parquet, Avro; schema drift", "Databases, warehouses, lakes; OLTP vs OLAP; NoSQL", "APIs: HTTP, pagination, retries, duplicates", "ETL vs ELT, contracts, idempotent loads"],
+    exam: ["No data-engineering question last year; an explain question (ETL, formats, batch vs streaming) is possible, and the row-cleaning loops train Q3–Q5."],
+    topics: [lecture, lifecycle, formats, storage, apis, etl],
   });
 })();

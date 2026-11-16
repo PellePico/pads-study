@@ -449,7 +449,7 @@
       </ol>`,
       reveal([
         { hint: true, label: "Where does the counter live?", html: "<p>It must be <b>one</b> number shared by all objects. A variable written in the class body (not after <code>self.</code>) is shared. Update it with <code>Food.next_id += 1</code>, never <code>self.next_id += 1</code>.</p>" },
-        { hint: true, label: "What does “abstract” look like?", html: "<p>Exactly like <code>Shape.area</code> in Lecture 4: the parent inherits from <code>ABC</code>, the method gets <code>@abstractmethod</code> on the line above, and its body is just <code>pass</code>.</p>" },
+        { hint: true, label: "What does “abstract” look like?", html: "<p>Exactly like <code>Shape.area</code> from the Classes subject: the parent inherits from <code>ABC</code>, the method gets <code>@abstractmethod</code> on the line above, and its body is just <code>pass</code>.</p>" },
         { label: "Imports and the counter", code: `
             import random                            # randint and choice
             from abc import ABC, abstractmethod      # for the abstract method
@@ -559,7 +559,7 @@
       { type: "explain", q: "In 2–3 sentences: why make <code>assign_category</code> an abstract method in <code>Food</code>?",
         answer: "<p>Every food must have a category, but the parent cannot know the choices: Snacks and Beverages use different lists. An abstract method says “every subclass must write this method”, and Python refuses to build a plain <code>Food()</code>. So <code>__init__</code> can safely call <code>self.assign_category()</code>, and each subclass fills in its own version.</p>",
         points: ["parent does not know the categories", "subclass must implement it", "<code>Food()</code> itself cannot be built (TypeError)", "<code>__init__</code> calls the subclass's version"],
-        hint: "Think of Lecture 4's <code>Shape.area</code>." },
+        hint: "Think of <code>Shape.area</code> from the Classes subject." },
     ],
   };
 
@@ -1005,7 +1005,7 @@
       { type: "h", text: "The task in plain words" },
       `<p>The code should: <b>show the price → take the coins → decide if payment worked → go on, or refund and stop</b>. It has at least one syntax error and at least one logical or runtime error. List them all and explain each one (max 3–4 sentences).</p>`,
       { type: "code", code: Q4_CODE, caption: "The exam cell (line 1 is the comment)" },
-      { type: "table", caption: "The three kinds of error (Lecture 5's Museum of Errors)", head: ["Kind", "When you notice", "Tiny example"], code: [2], rows: [
+      { type: "table", caption: "The three kinds of error (the “Museum of Errors”)", head: ["Kind", "When you notice", "Tiny example"], code: [2], rows: [
         ["<b>Syntax</b>", "Python won't start. Nothing in the cell runs.", "if x = 1:"],
         ["<b>Runtime</b>", "It starts, then crashes on one line.", "print(succes)   # NameError"],
         ["<b>Logic</b>", "It finishes, but does the wrong thing.", "change = price - total   # wrong sign"],
