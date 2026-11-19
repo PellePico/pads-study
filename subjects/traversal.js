@@ -3168,6 +3168,211 @@
     },
   });
 
+  /* ---------- stack visualizer: tree + pile of plates + written list, for the user's notebook code ---------- */
+  const DV_CODE = {
+    pre: `
+      stack = [node]
+      while stack:
+          current = stack.pop()
+          result.append(current.value)
+          if current.right is not None: stack.append(current.right)
+          if current.left is not None: stack.append(current.left)`,
+    in: `
+      stack = []; current = node
+      while stack or current is not None:
+          if current is not None:
+              stack.append(current); current = current.left
+          else:
+              current = stack.pop(); result.append(current.value); current = current.right`,
+    post: `
+      stack = [(node, False)]
+      while stack:
+          current, done = stack.pop()
+          if done: result.append(current.value)
+          else:
+              stack.append((current, True))
+              if current.right is not None: stack.append((current.right, False))
+              if current.left is not None: stack.append((current.left, False))`,
+  };
+  function dvSteps(order) {                    // one entry per moment; pure data, so it can be tested in node
+    const S = [], W = [];
+    let st = [], cur = null, none = null, popped = null;
+    const snap = (line, cap, o) => S.push(Object.assign({ line, cap, stack: st.map(x => ({ v: x.n.v, f: x.f })), cur: cur ? cur.v : null,
+      none, written: W.slice(), popped, pushed: false, alert: false }, o || {}));
+    if (order === "pre") {
+      st = [{ n: SAMPLE }];
+      snap(1, "Start: the stack holds the root, 10.", { pushed: true });
+      while (st.length) {
+        cur = st.pop().n;
+        snap(3, `Pop ${cur.v} off the top.`);
+        W.push(cur.v);
+        snap(4, `Write ${cur.v}.` + (cur.l || cur.r ? "" : " It has no children, so nothing to push."));
+        if (cur.r) { st.push({ n: cur.r }); snap(5, cur.l ? `Push ${cur.r.v} first so ${cur.l.v} lands on top.` : `Push ${cur.r.v}.`, { pushed: true }); }
+        if (cur.l) { st.push({ n: cur.l }); snap(6, `Push ${cur.l.v}. It is on top, so it comes out next.`, { pushed: true }); }
+      }
+      cur = null;
+      snap(2, "The stack is empty, so the loop stops. Done.");
+    } else if (order === "in") {
+      cur = SAMPLE;
+      snap(1, "Start: the stack is empty. current points at the root, 10.");
+      while (st.length || cur) {
+        if (cur) {
+          st.push({ n: cur });
+          const was = cur;
+          cur = cur.l;
+          none = cur ? null : [was.v, "l"];
+          snap(4, `Push ${was.v}: remember me for later. ` + (cur ? `Slide left to ${cur.v}.` : `${was.v} has no left child, so current = None.`), { pushed: true });
+        } else {
+          cur = st.pop().n;
+          none = null;
+          W.push(cur.v);
+          snap(6, `current is None, so pop ${cur.v} and write it.`);
+          const was = cur;
+          cur = cur.r;
+          none = cur ? null : [was.v, "r"];
+          snap(6, cur ? `Go right: current = ${cur.v}.` : `Go right: ${was.v} has no right child, so current = None.`);
+          if (!st.length && cur) snap(2, `The stack is empty, but current = ${cur.v}. So the loop keeps going!`, { alert: true });
+        }
+      }
+      snap(2, "The stack is empty and current is None. The loop stops. Done.");
+    } else {
+      st = [{ n: SAMPLE, f: false }];
+      snap(1, "Start: the stack holds (10, False). False means “new: not opened yet”.", { pushed: true });
+      while (st.length) {
+        const it = st.pop();
+        cur = it.n;
+        popped = { v: cur.v, f: it.f };
+        if (it.f) {
+          W.push(cur.v);
+          snap(4, `Pop (${cur.v}, True). True means done: write ${cur.v} now.`);
+          continue;
+        }
+        snap(3, `Pop (${cur.v}, False). False means new: open it, don't write it.`);
+        st.push({ n: cur, f: true });
+        snap(6, cur.l || cur.r ? `Push (${cur.v}, True) back, so ${cur.v} is written after its children.` : `Push (${cur.v}, True) back. It has no children, so it comes off next.`, { pushed: true });
+        if (cur.r) { st.push({ n: cur.r, f: false }); snap(7, `Push (${cur.r.v}, False).`, { pushed: true }); }
+        if (cur.l) { st.push({ n: cur.l, f: false }); snap(8, `Push (${cur.l.v}, False). It is on top, so it goes next.`, { pushed: true }); }
+      }
+      cur = null; popped = null;
+      snap(2, "The stack is empty, so the loop stops. Done.");
+    }
+    return S;
+  }
+  const DV_POS = { 10: [160, 44], 5: [80, 110], 15: [240, 110], 3: [40, 176], 7: [120, 176], 12: [200, 176], 18: [280, 176] };
+  function dvTree(st) {                         // the sample tree with tones and a "current" pointer
+    const S = D.svg({ w: 320, h: 262, label: "the sample tree; current node, stack and written nodes are coloured" });
+    const R = 19, onStack = new Set(st.stack.map(x => x.v)), opened = new Set(st.stack.filter(x => x.f).map(x => x.v));
+    const edge = (a, b, op) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+      S.line(a[0] + dx / len * R, a[1] + dy / len * R, b[0] - dx / len * (op && op.end || R), b[1] - dy / len * (op && op.end || R), op);
+    };
+    [[10, 5], [10, 15], [5, 3], [5, 7], [15, 12], [15, 18]].forEach(([a, b]) => edge(DV_POS[a], DV_POS[b]));
+    let ptr = null;
+    if (st.none) {                              // current = None: a dashed ghost where the missing child would be
+      const p = DV_POS[st.none[0]], g = [p[0] + (st.none[1] === "l" ? -22 : 22), 238];
+      edge(p, g, { dashed: true, tone: "accent", end: 12 });
+      S.box(g[0] - 22, g[1] - 11, 44, 22, { text: "None", dashed: true, tone: "accent", rx: 6, size: 12 });
+      ptr = [g[0], g[1] - 11];
+    }
+    Object.keys(DV_POS).forEach(k => {
+      const v = Number(k), p = DV_POS[v];
+      const tone = v === st.cur ? "accent" : opened.has(v) ? "min" : onStack.has(v) ? "cmp" : st.written.includes(v) ? "done" : null;
+      S.circle(p[0], p[1], R, { text: String(v), tone });
+      if (st.written.includes(v)) S.text(p[0] + R + 4, p[1] - R + 2, "✓", { anchor: "start", small: true });
+    });
+    if (st.cur != null) ptr = [DV_POS[st.cur][0], DV_POS[st.cur][1] - R];
+    if (ptr) {
+      const sd = ptr[0] > 160 ? 1 : -1;        // label on the outer side, away from the edges
+      S.arrow(ptr[0] + sd * 30, ptr[1] - 20, ptr[0] + sd * 6, ptr[1] - 3, { tone: "accent" });
+      S.text(ptr[0] + sd * 34, ptr[1] - 24, "current", { anchor: sd > 0 ? "start" : "end", small: true, ui: true });
+    }
+    return S.el;
+  }
+  function dvPile(st, order) {                  // the stack as plates, top plate first
+    const pile = h("div", { class: "tv-dv-pile", role: "list", "aria-label": "stack, top first" });
+    if (!st.stack.length) pile.appendChild(h("p", { class: "small muted tv-dv-empty" }, "(empty)"));
+    st.stack.slice().reverse().forEach((x, i) => {
+      const post = order === "post";
+      const plate = h("div", { class: "tv-dv-plate" + (post && x.f ? " is-done" : "") + (i === 0 && st.pushed ? " is-new" : ""), role: "listitem" },
+        post ? h("span", null, h("b", null, String(x.v)), " · " + (x.f ? "True" : "False")) : h("b", null, String(x.v)),
+        post ? h("span", { class: "tv-dv-tag" }, x.f ? "done" : "new") : null);
+      pile.appendChild(h("div", { class: "tv-dv-prow" }, plate, h("span", { class: "tv-dv-top" }, i === 0 ? "← top" + (st.pushed ? " (just pushed)" : "") : "")));
+    });
+    pile.appendChild(h("div", { class: "tv-dv-base", "aria-hidden": "true" }));
+    return pile;
+  }
+  function dvWidget(el, api) {
+    const NAMES = { pre: "Pre-order", in: "In-order", post: "Post-order" };
+    const EXPECT = { pre: "[10, 5, 3, 7, 15, 12, 18]", in: "[3, 5, 7, 10, 12, 15, 18]", post: "[3, 7, 5, 12, 18, 15, 10]" };
+    const ORDERS = ["pre", "in", "post"];
+    let order = "pre", steps = dvSteps(order), k = 0, timer = null;
+    const bReset = btn(null, () => go(0), "btn small", { html: ui.icons.reset + "Reset" });
+    const bBack = btn(null, () => go(k - 1), "btn small", { html: ui.icons.back + "Back" });
+    const bPlay = btn(null, play, "btn small", { html: ui.icons.play + "Play" });
+    const bNext = btn(null, () => go(k + 1), "btn small primary", { html: "Next" + ui.icons.next });
+    const count = h("span", { class: "small muted" });
+    const cap = h("p", { class: "tv-dv-cap", "aria-live": "polite" });
+    const codeBox = h("div");
+    const tree = h("div", { class: "tv-dv-tree" });
+    const pileBox = h("div");
+    const popBox = h("div");
+    const vars = h("div");
+    const written = h("div");
+    const legend = h("div", { style: "margin-top:10px" });
+    const sw = seg(ORDERS.map(o => NAMES[o]), "Traversal order", i => { stop(); order = ORDERS[i]; steps = dvSteps(order); k = 0; build(); });
+    el.append(
+      sw,
+      h("div", { class: "row-wrap tv-dv-ctl" }, bReset, bBack, bPlay, bNext, count),
+      cap,
+      h("div", { class: "tv-dv-grid" },
+        h("div", { class: "tv-dv-code" }, eyebrow("The code"), codeBox),
+        h("div", { class: "tv-dv-vis" },
+          tree,
+          h("div", { class: "tv-dv-side" },
+            h("div", null, eyebrow("Stack (top at the top)"), pileBox, popBox),
+            h("div", null, eyebrow("Written so far"), written, h("div", { style: "margin-top:10px" }, vars))))),
+      legend);
+    function build() {
+      legend.replaceChildren(D.legend([["held", "current"], ["cmp", order === "post" ? "on the stack, new (False)" : "on the stack"]].concat(order === "post" ? [["min", "on the stack, done (True)"]] : [], [["done", "written ✓"]])));
+      codeBox.replaceChildren(ui.code({ code: DV_CODE[order] }));
+      render();
+    }
+    function render() {
+      const st = steps[k], prev = steps[k - 1];
+      codeBox.querySelectorAll(".ln").forEach((ln, i) => ln.classList.toggle("active", i + 1 === st.line));
+      cap.className = "tv-dv-cap" + (st.alert ? " is-alert" : "") + (k === steps.length - 1 ? " is-end" : "");
+      cap.innerHTML = (st.alert ? "<b>Look:</b> " : "") + PADS.esc(st.cap) + (k === steps.length - 1 ? ` Result: <code>${EXPECT[order]}</code>.` : "");
+      tree.replaceChildren(dvTree(st));
+      pileBox.replaceChildren(dvPile(st, order));
+      popBox.replaceChildren();
+      if (order === "post" && st.popped) {
+        const w = st.popped.f;
+        popBox.appendChild(h("p", { class: "tv-dv-pop " + (w ? "is-write" : "is-open") },
+          "Last popped: ", h("b", null, `(${st.popped.v}, ${w ? "True" : "False"})`), w ? " → written ✓" : " → opened, NOT written"));
+      }
+      written.replaceChildren(D.array(st.written.map(String), { index: false, marks: Object.fromEntries(st.written.map((_, i) => [i, "done"])), emptyText: "[ ]" }));
+      const vv = { current: st.cur != null ? String(st.cur) : "None" };
+      if (order === "post" && st.popped) vv.done = st.popped.f ? "True" : "False";
+      const pv = prev ? { current: prev.cur != null ? String(prev.cur) : "None" } : undefined;
+      if (pv && order === "post" && prev.popped) pv.done = prev.popped.f ? "True" : "False";
+      vars.replaceChildren(D.vars(vv, pv));
+      count.textContent = `Step ${k + 1} / ${steps.length}`;
+      bBack.disabled = k === 0;
+      bNext.disabled = k === steps.length - 1;
+    }
+    function go(n) { stop(); k = Math.max(0, Math.min(steps.length - 1, n)); render(); }
+    function stop() { if (timer) clearInterval(timer); timer = null; bPlay.innerHTML = ui.icons.play + "Play"; }
+    function play() {
+      if (timer) return stop();
+      if (k === steps.length - 1) k = 0;
+      bPlay.innerHTML = ui.icons.pause + "Pause";
+      timer = setInterval(() => { if (!el.isConnected || k >= steps.length - 1) return stop(); k++; render(); }, 1100);
+      render();
+    }
+    if (api && api.onCleanup) api.onCleanup(stop);
+    build();
+  }
+
   const iterativeDfs = {
     id: "iterative-dfs",
     title: "Iterative DFS (explicit stack)",
@@ -3183,6 +3388,9 @@
         ["In", "slide left pushing every node; pop, visit, go right", "push 10, 5, 3 → pop 3, 5, … ✓"],
         ["Post", "push <code>(node, False)</code>; on False push <code>(node, True)</code>, right, left; on True visit", "10 is visited last ✓"],
       ] },
+      { type: "widget", title: "Watch the stack", intro: "Pick an order, then press Next. The tree, the stack of plates and the written list change together. The code is the same as in the notebook.", render: dvWidget },
+      { type: "callout", kind: "tip", title: "Popping is not writing", html: "<p>Pre-order and in-order write a node the moment it is popped. Post-order does not: popping <code>(5, False)</code> only opens 5. It is written later, when <code>(5, True)</code> comes off the top.</p>" },
+      { type: "h", text: "The same loops, written out", sub: "Longer versions with comments. In-order uses an inner while loop to slide left, and the flag is called expanded instead of done." },
       { type: "switch", label: "Order", items: [
         { label: "Pre-order", blocks: [iterStepper("pre")] },
         { label: "In-order", blocks: [iterStepper("in")] },
